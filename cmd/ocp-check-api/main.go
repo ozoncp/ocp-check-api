@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	fmt.Printf("Hello from %v\n", emoji.Package)
+	fmt.Printf("Hello from %v of Vladimir Cherdantsev\n", emoji.Package)
 }
