@@ -6,6 +6,11 @@ import (
 	"github.com/enescakir/emoji"
 )
 
+func Greeting(name string) string {
+	return fmt.Sprintf("Hello, %v!", name)
+}
+
 func main() {
-	fmt.Printf("Hello from %v of Vladimir Cherdantsev\n", emoji.Package)
+	fmt.Println(Greeting("Vladimir Cherdantsev"))
+	fmt.Printf("It is a main %v\n", emoji.Package)
 }
