@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"fmt"
+
+	"github.com/ozoncp/ocp-check-api/core/api"
 )
 
 // Generic type
@@ -10,14 +12,14 @@ type Any = interface{}
 
 // Function converts slice to slice of slices, size batchSize.
 // Each call to BatchSlice returns also an error, when batchSize is equal to 0.
-func BatchSlice(slice []string, batchSize int) (batches [][]string, err error) {
-	if batchSize <= 0 {
+func BatchSlice(slice []string, batchSize uint) (batches [][]string, err error) {
+	if batchSize == 0 {
 		batches = nil
 		err = errors.New("invalid batch size")
 		return
 	}
 
-	for batchSize < len(slice) {
+	for batchSize < uint(len(slice)) {
 		slice, batches = slice[batchSize:], append(batches, slice[0:batchSize:batchSize])
 	}
 
@@ -73,4 +75,24 @@ func Filter(source []string, exclusion []string) []string {
 	}
 
 	return filter(source, f)
+}
+
+type Check = api.Check
+
+func SplitToBulks(checks []Check, batchSize uint) (batches [][]Check) {
+	for int(batchSize) < len(checks) {
+		checks, batches = checks[batchSize:], append(batches, checks[0:batchSize:batchSize])
+	}
+
+	batches = append(batches, checks)
+	return
+}
+
+func ConvertSliceToMap(checks []Check) (map[uint64]Check, error) {
+	m := make(map[uint64]Check, len(checks))
+	for _, v := range checks {
+		m[v.CheckId] = v
+	}
+
+	return m, nil
 }

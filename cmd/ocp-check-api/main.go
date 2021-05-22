@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/enescakir/emoji"
+	"github.com/ozoncp/ocp-check-api/core/api"
 	"github.com/ozoncp/ocp-check-api/internal/utils"
 )
 
@@ -32,4 +35,18 @@ func main() {
 
 	var filtered = utils.Filter([]string{"one", "two", "three"}, []string{"four", "five", "two"})
 	fmt.Println(filtered)
+
+	for i := 0; i < 10000; i++ {
+		func() {
+			file, err := os.Open("go.mod")
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+		}()
+	}
+
+	var check = &api.Check{}
+	check.Init(1, 2, 3, 4, true)
+	fmt.Println(check.String())
 }
