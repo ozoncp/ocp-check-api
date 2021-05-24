@@ -7,9 +7,6 @@ import (
 	"github.com/ozoncp/ocp-check-api/core/api"
 )
 
-// Generic type
-type Any = interface{}
-
 // Function converts slice to slice of slices, size batchSize.
 // Each call to BatchSlice returns also an error, when batchSize is equal to 0.
 func BatchSlice(slice []string, batchSize uint) (batches [][]string, err error) {
@@ -28,10 +25,10 @@ func BatchSlice(slice []string, batchSize uint) (batches [][]string, err error) 
 	return
 }
 
-// Function transposes map having keys of type string and values of type Any.
+// Function transposes map having keys of type string and values of type interface{}.
 // Transposed map has keys and values of type string.
-func TransposeMap(source Any) (dest map[string]string, err error) {
-	unboxed, ok := source.(map[string]Any)
+func TransposeMap(source interface{}) (dest map[string]string, err error) {
+	unboxed, ok := source.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("source should be a map[string]interface{}")
 	}
@@ -42,6 +39,9 @@ func TransposeMap(source Any) (dest map[string]string, err error) {
 	m := make(map[string]string, len(unboxed))
 	for k, v := range unboxed {
 		s := fmt.Sprintf("%v", v)
+		if _, ok := m[s]; ok {
+			panic(fmt.Sprintf("duplicate key/value: %v/%v", k, s))
+		}
 		m[s] = k
 	}
 
