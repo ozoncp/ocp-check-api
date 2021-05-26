@@ -77,9 +77,7 @@ func Filter(source []string, exclusion []string) []string {
 	return filter(source, f)
 }
 
-type Check = api.Check
-
-func SplitToBulks(checks []Check, batchSize uint) (batches [][]Check) {
+func SplitToBulks(checks []api.Check, batchSize uint) (batches [][]api.Check) {
 	for int(batchSize) < len(checks) {
 		checks, batches = checks[batchSize:], append(batches, checks[0:batchSize:batchSize])
 	}
@@ -88,10 +86,10 @@ func SplitToBulks(checks []Check, batchSize uint) (batches [][]Check) {
 	return
 }
 
-func ConvertSliceToMap(checks []Check) (map[uint64]Check, error) {
-	m := make(map[uint64]Check, len(checks))
+func ConvertSliceToMap(checks []api.Check) (map[uint64]api.Check, error) {
+	m := make(map[uint64]api.Check, len(checks))
 	for _, v := range checks {
-		m[v.CheckId] = v
+		m[v.ID] = v
 	}
 
 	return m, nil

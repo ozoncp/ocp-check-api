@@ -90,8 +90,7 @@ func TestFilter(t *testing.T) {
 }
 
 func TestApiObjectAsString(t *testing.T) {
-	var check = &api.Check{}
 	var id uint64 = 1
-	check.Init(id, 2, 3, 4, true)
+	var check = &api.Check{ID: id, SolutionID: 2, TestID: 3, RunnerID: 4, Success: true}
 	assert.Equal(t, check.String(), fmt.Sprintf("Check(id=%v)", id))
 }
