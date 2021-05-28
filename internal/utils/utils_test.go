@@ -52,30 +52,33 @@ func TestTransposeNotMap(t *testing.T) {
 
 func TestTransposeMap(t *testing.T) {
 	sourceMap := map[string]interface{}{"key1": "value1", "key2": "value2", "key3": "value3"}
-	transposedMap, _ := TransposeMap(sourceMap)
+	transposedMap, err := TransposeMap(sourceMap)
+	if assert.NoError(t, err) {
+		actual := len(transposedMap)
+		expected := 3
+		assert.Equal(t, expected, actual, fmt.Sprintf("Transposed map len should be equal of %v", expected))
 
-	actual := len(transposedMap)
-	expected := 3
-	assert.Equal(t, expected, actual, fmt.Sprintf("Transposed map len should be equal of %v", expected))
-
-	expectedMap := map[string]string{"value1": "key1", "value2": "key2", "value3": "key3"}
-	if diff := cmp.Diff(expectedMap, transposedMap); diff != "" {
-		t.Errorf("TransposeMap() mismatch (-expected +actual):\n%s", diff)
+		expectedMap := map[string]string{"value1": "key1", "value2": "key2", "value3": "key3"}
+		if diff := cmp.Diff(expectedMap, transposedMap); diff != "" {
+			t.Errorf("TransposeMap() mismatch (-expected +actual):\n%s", diff)
+		}
 	}
 }
 
 func TestTransposeMapInterfaceValues(t *testing.T) {
 	var sourceMap = map[string]interface{}{"one": 2, "three": "four"}
-	var transposedMap, _ = TransposeMap(sourceMap)
-	expectedMap := map[string]string{"2": "one", "four": "three"}
-	if diff := cmp.Diff(expectedMap, transposedMap); diff != "" {
-		t.Errorf("TransposeMap() mismatch (-expected +actual):\n%s", diff)
+	var transposedMap, err = TransposeMap(sourceMap)
+	if assert.NoError(t, err) {
+		expectedMap := map[string]string{"2": "one", "four": "three"}
+		if diff := cmp.Diff(expectedMap, transposedMap); diff != "" {
+			t.Errorf("TransposeMap() mismatch (-expected +actual):\n%s", diff)
+		}
 	}
 }
 func TestTransposeMapPanic(t *testing.T) {
 	f := func() {
 		sourceMap := map[string]interface{}{"key1": "value1", "key2": "value2", "key3": "value2"}
-		TransposeMap(sourceMap)
+		_, _ = TransposeMap(sourceMap)
 	}
 	expectedErrorMsg := "duplicate key/value: key3/value2"
 	assert.PanicsWithValue(t, expectedErrorMsg, f)
