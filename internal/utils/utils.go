@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ozoncp/ocp-check-api/core/api"
+	"github.com/ozoncp/ocp-check-api/internal/models"
 )
 
 // Function converts slice to slice of slices, size batchSize.
@@ -77,7 +77,7 @@ func Filter(source []string, exclusion []string) []string {
 	return filter(source, f)
 }
 
-func SplitToBulks(checks []api.Check, batchSize uint) (batches [][]api.Check) {
+func SplitChecksToBulks(checks []models.Check, batchSize uint) (batches [][]models.Check) {
 	for int(batchSize) < len(checks) {
 		checks, batches = checks[batchSize:], append(batches, checks[0:batchSize:batchSize])
 	}
@@ -86,9 +86,27 @@ func SplitToBulks(checks []api.Check, batchSize uint) (batches [][]api.Check) {
 	return
 }
 
-func ConvertSliceToMap(checks []api.Check) (map[uint64]api.Check, error) {
-	m := make(map[uint64]api.Check, len(checks))
+func ConvertChecksToMap(checks []models.Check) (map[uint64]models.Check, error) {
+	m := make(map[uint64]models.Check, len(checks))
 	for _, v := range checks {
+		m[v.ID] = v
+	}
+
+	return m, nil
+}
+
+func SplitTestsToBulks(tests []models.Test, batchSize uint) (batches [][]models.Test) {
+	for int(batchSize) < len(tests) {
+		tests, batches = tests[batchSize:], append(batches, tests[0:batchSize:batchSize])
+	}
+
+	batches = append(batches, tests)
+	return
+}
+
+func ConvertTestsToMap(tests []models.Test) (map[uint64]models.Test, error) {
+	m := make(map[uint64]models.Test, len(tests))
+	for _, v := range tests {
 		m[v.ID] = v
 	}
 

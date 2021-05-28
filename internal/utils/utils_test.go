@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/ozoncp/ocp-check-api/core/api"
+	"github.com/ozoncp/ocp-check-api/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,7 +44,7 @@ func TestTransposeNilMap(t *testing.T) {
 }
 
 func TestTransposeNotMap(t *testing.T) {
-	s := map[string]api.Check{}
+	s := map[string]models.Check{}
 	_, err := TransposeMap(s)
 	expectedErrorMsg := "source should be a map[string]interface{}"
 	assert.EqualErrorf(t, err, expectedErrorMsg, "Error should be: %v, actual: %v", expectedErrorMsg, err)
@@ -89,8 +89,14 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func TestApiObjectAsString(t *testing.T) {
+func TestModelsCheckAsString(t *testing.T) {
 	var id uint64 = 1
-	var check = &api.Check{ID: id, SolutionID: 2, TestID: 3, RunnerID: 4, Success: true}
+	var check = &models.Check{ID: id, SolutionID: 2, TestID: 3, RunnerID: 4, Success: true}
 	assert.Equal(t, check.String(), fmt.Sprintf("Check(id=%v)", id))
+}
+
+func TestModelsTestAsString(t *testing.T) {
+	var id uint64 = 10000000000
+	var test = &models.Test{ID: id, TaskID: 2, Input: "some input", Output: "panic"}
+	assert.Equal(t, test.String(), fmt.Sprintf("Test(id=%v)", id))
 }
