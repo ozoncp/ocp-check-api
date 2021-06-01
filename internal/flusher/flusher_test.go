@@ -65,11 +65,11 @@ var _ = Describe("Flusher", func() {
 
 	Context("save tests in repo partially", func() {
 		BeforeEach(func() {
-			tests = []models.Test{{}, {}, {}}
+			tests = []models.Test{{}, {}, {}, {}, {}}
 
 			gomock.InOrder(
 				mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(nil),
-				mockRepo.EXPECT().AddTests(gomock.Len(len(tests)-chunkSize)).Return(timeOutError),
+				mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(timeOutError),
 			)
 		})
 

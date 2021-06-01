@@ -16,11 +16,14 @@ type checkFlusher struct {
 }
 
 func (f *checkFlusher) Flush(checks []models.Check) []models.Check {
-	bulks := utils.SplitChecksToBulks(checks, uint(f.chunkSize))
+	bulks, err := utils.SplitChecksToBulks(checks, uint(f.chunkSize))
+	if err != nil {
+		return checks
+	}
 
 	for i := 0; i < len(bulks); i = i + 1 {
 		if err := f.checkRepo.AddChecks(bulks[i]); err != nil {
-			return bulks[i]
+			return checks[i*f.chunkSize:]
 		}
 	}
 
@@ -41,11 +44,14 @@ type testFlusher struct {
 }
 
 func (f *testFlusher) Flush(tests []models.Test) []models.Test {
-	bulks := utils.SplitTestsToBulks(tests, uint(f.chunkSize))
+	bulks, err := utils.SplitTestsToBulks(tests, uint(f.chunkSize))
+	if err != nil {
+		return tests
+	}
 
 	for i := 0; i < len(bulks); i = i + 1 {
 		if err := f.testRepo.AddTests(bulks[i]); err != nil {
-			return bulks[i]
+			return tests[i*f.chunkSize:]
 		}
 	}
 	return nil
