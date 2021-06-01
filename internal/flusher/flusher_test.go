@@ -1,6 +1,8 @@
 package flusher_test
 
 import (
+	"errors"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,14 +14,14 @@ import (
 var _ = Describe("Flusher", func() {
 
 	var (
-		ctrl *gomock.Controller
+		timeOutError = errors.New("timeout elapsed")
+		ctrl         *gomock.Controller
 
 		mockRepo  *mocks.MockTestRepo
-		err       error
 		f         flusher.TestFlusher
 		chunkSize = 2
 		tests     []models.Test
-		rest      []models.Test
+		remained  []models.Test
 	)
 
 	BeforeEach(func() {
@@ -29,14 +31,14 @@ var _ = Describe("Flusher", func() {
 
 	JustBeforeEach(func() {
 		f = flusher.NewTestFlusher(chunkSize, mockRepo)
-		rest = f.Flush(tests)
+		remained = f.Flush(tests)
 	})
 
 	AfterEach(func() {
 		ctrl.Finish()
 	})
 
-	Context("repo save all tasks", func() {
+	Context("save all tests in repo", func() {
 		BeforeEach(func() {
 			tests = []models.Test{{}, {}, {}}
 
@@ -44,20 +46,36 @@ var _ = Describe("Flusher", func() {
 		})
 
 		It("", func() {
-			Expect(err).Should(BeNil())
-			Expect(rest).Should(BeNil())
+			Expect(remained).Should(BeNil())
 		})
 	})
 
-	Context("repo save half of tasks", func() {
+	Context("error of saving all tests in repo", func() {
 		BeforeEach(func() {
-			tests = []models.Test{{}, {}, {}}
-			mockRepo.EXPECT().AddTests(gomock.Any()).Return().MinTimes(1)
+			tests = []models.Test{{}, {}}
+
+			mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(timeOutError)
 		})
 
 		It("", func() {
-			Expect(err).Should(BeNil())
-			Expect(rest).Should(BeNil())
+			Expect(remained).ShouldNot(BeNil())
+			Expect(len(remained)).To(Equal(len(tests)))
+		})
+	})
+
+	Context("save tests in repo partially", func() {
+		BeforeEach(func() {
+			tests = []models.Test{{}, {}, {}}
+
+			gomock.InOrder(
+				mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(nil),
+				mockRepo.EXPECT().AddTests(gomock.Len(len(tests)-chunkSize)).Return(timeOutError),
+			)
+		})
+
+		It("", func() {
+			Expect(remained).ShouldNot(BeNil())
+			Expect(len(remained)).To(Equal(len(tests) - chunkSize))
 		})
 	})
 })

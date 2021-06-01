@@ -3,6 +3,7 @@ package flusher
 import (
 	"github.com/ozoncp/ocp-check-api/internal/models"
 	"github.com/ozoncp/ocp-check-api/internal/repo"
+	"github.com/ozoncp/ocp-check-api/internal/utils"
 )
 
 type CheckFlusher interface {
@@ -14,8 +15,16 @@ type checkFlusher struct {
 	checkRepo repo.CheckRepo
 }
 
-func (c *checkFlusher) Flush(checks []models.Check) []models.Check {
-	return []models.Check{}
+func (f *checkFlusher) Flush(checks []models.Check) []models.Check {
+	bulks := utils.SplitChecksToBulks(checks, uint(f.chunkSize))
+
+	for i := 0; i < len(bulks); i = i + 1 {
+		if err := f.checkRepo.AddChecks(bulks[i]); err != nil {
+			return bulks[i]
+		}
+	}
+
+	return nil
 }
 
 func NewCheckFlusher(chunkSize int, checkRepo repo.CheckRepo) CheckFlusher {
@@ -32,23 +41,13 @@ type testFlusher struct {
 }
 
 func (f *testFlusher) Flush(tests []models.Test) []models.Test {
-	offset := int(0)
-	for offset+f.chunkSize < len(tests) {
-		if err := f.testRepo.AddTests(tests[offset:f.chunkSize]); err != nil {
-			return tests[offset:f.chunkSize]
+	bulks := utils.SplitTestsToBulks(tests, uint(f.chunkSize))
+
+	for i := 0; i < len(bulks); i = i + 1 {
+		if err := f.testRepo.AddTests(bulks[i]); err != nil {
+			return bulks[i]
 		}
-		offset += f.chunkSize
 	}
-
-	if len(tests) == offset {
-		return nil
-	}
-
-	// add last chunk
-	if err := f.testRepo.AddTests(tests[offset:]); err != nil {
-		return tests[offset:]
-	}
-
 	return nil
 }
 
