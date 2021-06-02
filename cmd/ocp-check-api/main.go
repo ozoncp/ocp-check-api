@@ -1,78 +1,61 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
+	"bufio"
 	"fmt"
-	"log"
+	"io"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/enescakir/emoji"
+	"github.com/ozoncp/ocp-check-api/internal/flusher"
 	"github.com/ozoncp/ocp-check-api/internal/models"
-	"github.com/ozoncp/ocp-check-api/internal/utils"
+	"github.com/ozoncp/ocp-check-api/internal/repo"
+	"github.com/ozoncp/ocp-check-api/internal/saver"
 )
 
 func Greeting(name string) string {
 	return fmt.Sprintf("Hello, %v!", name)
 }
 
-func taskDeferInLoop() {
-	for i := 0; i < 10; i++ {
-		func() {
-			file, err := os.Open("go.mod")
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer file.Close()
-		}()
-	}
+// Чтение консольного ввода
+func read(r io.Reader) <-chan string {
+	consoleCh := make(chan string)
+	go func() {
+		defer close(consoleCh)
+		scan := bufio.NewScanner(r)
+		for scan.Scan() {
+			s := scan.Text()
+			consoleCh <- s
+		}
+	}()
+	return consoleCh
 }
+
 func main() {
-	runDeferOpenPtr := flag.Bool("run-defer-task", false, "run deferred file closing in for loop")
+	termChan := make(chan os.Signal, 1)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
 
-	flag.Parse()
+	capacity := uint(10)
+	chunkSize := 100
+	repo := repo.NewCheckRepo()
+	flusher := flusher.NewCheckFlusher(chunkSize, repo)
 
-	if *runDeferOpenPtr {
-		taskDeferInLoop()
+	saver := saver.NewSaver(capacity, time.Second*3, flusher)
+	if saver != nil {
+		saver.Init()
 	}
 
-	fmt.Println(Greeting("Vladimir Cherdantsev"))
-	fmt.Printf("It is a main %v\n", emoji.Package)
+	consoleCh := read(os.Stdin)
 
-	{
-		var checks = []models.Check{}
-		c := models.Check{ID: 2, SolutionID: 3, TestID: 4, RunnerID: 5, Success: false}
-		checks = append(checks, c)
-
-		checks = append(checks, models.Check{ID: 3, SolutionID: 4, TestID: 5, RunnerID: 6, Success: true})
-
-		str := `{"id": 4, "success": false}`
-		jsonCheck := models.Check{}
-		if err := json.Unmarshal([]byte(str), &jsonCheck); err == nil && jsonCheck.ID > 0 {
-			checks = append(checks, jsonCheck)
+	go func() {
+		fmt.Println("Enter new string to save check or press Ctrl+C to exit...")
+		for msg := range consoleCh {
+			saver.Save(models.Check{ID: uint64(len(msg)), Success: len(msg) > 2})
 		}
+	}()
 
-		var batches [][]models.Check
-		batches, _ = utils.SplitChecksToBulks(checks, 10)
-		fmt.Printf("First check: %v\n", batches[0][0].String())
-		fmt.Printf("Batch[0] len: %v\n", len(batches[0]))
-	}
-
-	{
-		var tests = []models.Test{}
-		t := models.Test{ID: 7, TaskID: 8, Input: "run", Output: "Hello world!"}
-		tests = append(tests, t)
-
-		tests = append(tests, models.Test{ID: 3, TaskID: 4, Output: "wrong", Input: "try"})
-
-		str := `{"id": 4, "taskID": 12}`
-		jsonTest := models.Test{}
-		if err := json.Unmarshal([]byte(str), &jsonTest); err == nil && jsonTest.ID > 0 {
-			tests = append(tests, jsonTest)
-		}
-
-		batches, _ := utils.SplitTestsToBulks(tests, 2)
-		fmt.Printf("First test: %v\n", batches[0][0].String())
-		fmt.Printf("Batch[0] len: %v\n", len(batches[0]))
-	}
+	<-termChan // Ctrl+C pressed!
+	saver.Close()
 }
