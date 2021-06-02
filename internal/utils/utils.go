@@ -77,7 +77,12 @@ func Filter(source []string, exclusion []string) []string {
 	return filter(source, f)
 }
 
-func SplitChecksToBulks(checks []models.Check, batchSize uint) (batches [][]models.Check) {
+func SplitChecksToBulks(checks []models.Check, batchSize uint) (batches [][]models.Check, err error) {
+	if batchSize == 0 {
+		err = errors.New("invalid batch size")
+		return
+	}
+
 	for int(batchSize) < len(checks) {
 		checks, batches = checks[batchSize:], append(batches, checks[0:batchSize:batchSize])
 	}
@@ -95,7 +100,12 @@ func ConvertChecksToMap(checks []models.Check) (map[uint64]models.Check, error) 
 	return m, nil
 }
 
-func SplitTestsToBulks(tests []models.Test, batchSize uint) (batches [][]models.Test) {
+func SplitTestsToBulks(tests []models.Test, batchSize uint) (batches [][]models.Test, err error) {
+	if batchSize == 0 {
+		err = errors.New("invalid batch size")
+		return
+	}
+
 	for int(batchSize) < len(tests) {
 		tests, batches = tests[batchSize:], append(batches, tests[0:batchSize:batchSize])
 	}

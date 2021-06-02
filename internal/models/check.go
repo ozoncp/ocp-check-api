@@ -12,14 +12,4 @@ type Check struct {
 	Success    bool   `json:"success,omitempty"`
 }
 
-func NewCheck(checkID uint64, solutionID uint64, testID uint64, runnerID uint64, success bool) (*Check, error) {
-	check := &Check{
-		ID:         checkID,
-		SolutionID: solutionID,
-		TestID:     testID,
-		RunnerID:   runnerID,
-		Success:    success}
-	return check, nil
-}
-
 func (c *Check) String() string { return fmt.Sprintf("Check(id=%v)", c.ID) }
