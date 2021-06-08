@@ -1,7 +1,6 @@
 package saver
 
 import (
-	"sync"
 	"time"
 
 	"github.com/ozoncp/ocp-check-api/internal/flusher"
@@ -9,70 +8,56 @@ import (
 )
 
 type Saver interface {
-	Save(entity models.Check)
+	Save(entity models.Check) error
 	Init()
 	Close()
 }
 
 // Saver с поддержкой периодического сохранения
 type checkSaverPeriodic struct {
-	capacity uint
-	entities []models.Check
-	period   time.Duration
-	flusher  *flusher.CheckFlusher
-	ticker   *time.Ticker
-	mtx      *sync.Mutex
+	flusher  flusher.CheckFlusher
+	checksCh chan models.Check
 	closeCh  chan bool
-	wg       *sync.WaitGroup
+	ticker   *time.Ticker
 }
 
 func (c *checkSaverPeriodic) Init() {
-	// Capacity задается параметром Saver-a
-	c.entities = make([]models.Check, 0, c.capacity)
-
-	c.mtx = &sync.Mutex{}
-
-	c.wg = &sync.WaitGroup{}
-	// Группа wg имеет одно задание: Flush на завершении
-	c.wg.Add(1)
-
-	c.ticker = time.NewTicker(c.period)
-	c.closeCh = make(chan bool)
+	var entities []models.Check
 
 	// Flush на закрытие или по тику
 	go func() {
 		for {
 			select {
+			case e := <-c.checksCh:
+				entities = append(entities, e)
 			case <-c.closeCh:
-				c.mtx.Lock()
-				c.entities = (*c.flusher).Flush(c.entities)
-				c.mtx.Unlock()
-				c.wg.Done()
+				_ = (c.flusher).Flush(entities)
 				return
 			case <-c.ticker.C:
-				c.mtx.Lock()
-				c.entities = (*c.flusher).Flush(c.entities)
-				c.mtx.Unlock()
+				entities = (c.flusher).Flush(entities)
 			}
 		}
 	}()
 }
 
-// Метод для добавления сущности в slice, который защищен мьютексом
-func (c *checkSaverPeriodic) Save(entity models.Check) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	c.entities = append(c.entities, entity)
+// Метод для сохранения сущности
+func (c *checkSaverPeriodic) Save(check models.Check) error {
+	c.checksCh <- check
+	return nil
 }
 
 // Закрытие Saver-a: останавливаем тикер, передаем в канал о закрытии и ждем завершения
 func (c *checkSaverPeriodic) Close() {
 	c.ticker.Stop()
 	c.closeCh <- true
-	c.wg.Wait()
 }
 
 // NewSaver возвращает Saver с поддержкой периодического сохранения
 func NewSaver(capacity uint, period time.Duration, flusher flusher.CheckFlusher) Saver {
-	return &checkSaverPeriodic{capacity, make([]models.Check, capacity), period, &flusher, nil, nil, nil, nil}
+	// Capacity задается параметром Saver-a
+	checksCh := make(chan models.Check, capacity)
+	closeCh := make(chan bool)
+	ticker := time.NewTicker(period)
+
+	return &checkSaverPeriodic{flusher, checksCh, closeCh, ticker}
 }

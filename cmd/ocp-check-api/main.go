@@ -47,15 +47,15 @@ func main() {
 		saver.Init()
 	}
 
+	defer saver.Close()
 	consoleCh := read(os.Stdin)
 
 	go func() {
-		fmt.Println("Enter new string to save check or press Ctrl+C to exit...")
+		fmt.Println("Enter new string to save models.Check or press Ctrl+C to exit...")
 		for msg := range consoleCh {
-			saver.Save(models.Check{ID: uint64(len(msg)), Success: len(msg) > 2})
+			_ = saver.Save(models.Check{ID: uint64(len(msg)), Success: len(msg) > 2})
 		}
 	}()
 
 	<-termChan // Ctrl+C pressed!
-	saver.Close()
 }
