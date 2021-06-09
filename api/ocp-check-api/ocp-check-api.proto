@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+package ocp.check.api;
+
+option go_package = "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api;ocp_check_api";
+
+// Описание "проверки"
+
+service OcpCheckApi {
+
+    // Возвращает список "проверок"
+    rpc ListChecks(ListChecksRequest) returns (ListChecksResponse) {
+        option (google.api.http) = {
+            get: "/checks"
+        };
+    }
+
+    // Возвращает описание "проверки" по ее идентификатору
+    rpc DescribeCheck(DescribeCheckRequest) returns (DescribeCheckResponse) {
+        option (google.api.http) = {
+            get: "/checks/{check_id}"
+        };
+    }
+
+    // Создает новую "проверку"
+    rpc CreateCheck(CreateCheckRequest) returns (CreateCheckResponse) {
+        option (google.api.http) = {
+            post: "/checks"
+        };
+    }
+
+    // Удаляет "проверку" по идентификатору
+    rpc RemoveCheck(RemoveCheckRequest) returns (RemoveCheckResponse) {
+        option (google.api.http) = {
+            delete: "/checks/{check_id}"
+        };
+    }
+}
+
+message ListChecksRequest {
+    uint64 limit = 1;
+    uint64 offset = 2;
+}
+
+message ListChecksResponse {
+    repeated Check checks = 1;
+}
+
+message CreateCheckRequest {
+    uint64 solutionID = 1;
+    uint64 testID = 2;
+    uint64 runnerID = 3;
+    bool success = 4;
+}
+
+message CreateCheckResponse {
+    uint64 check_id = 1;
+}
+
+message RemoveCheckRequest {
+    uint64 check_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message RemoveCheckResponse {
+    bool found = 1;
+}
+
+message DescribeCheckRequest {
+    uint64 check_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeCheckResponse {
+    Check check = 1;
+}
+
+// Описание структуры "проверка"
+message Check {
+    uint64 id = 1;
+    uint64 solutionID = 2;
+    uint64 testID = 3;
+    uint64 runnerID = 4;
+    bool success = 5;
+}
