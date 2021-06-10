@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // ensure the imports are used
@@ -30,7 +30,7 @@ var (
 	_ = time.Duration(0)
 	_ = (*url.URL)(nil)
 	_ = (*mail.Address)(nil)
-	_ = ptypes.DynamicAny{}
+	_ = anypb.Any{}
 )
 
 // Validate checks the field values on ListChecksRequest with the rules defined
@@ -338,7 +338,12 @@ func (m *RemoveCheckRequest) Validate() error {
 		return nil
 	}
 
-	// no validation rules for CheckId
+	if m.GetCheckId() <= 0 {
+		return RemoveCheckRequestValidationError{
+			field:  "CheckId",
+			reason: "value must be greater than 0",
+		}
+	}
 
 	return nil
 }
@@ -476,7 +481,12 @@ func (m *DescribeCheckRequest) Validate() error {
 		return nil
 	}
 
-	// no validation rules for CheckId
+	if m.GetCheckId() == 0 {
+		return DescribeCheckRequestValidationError{
+			field:  "CheckId",
+			reason: "value must be greater than 0",
+		}
+	}
 
 	return nil
 }

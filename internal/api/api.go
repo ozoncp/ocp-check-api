@@ -29,6 +29,9 @@ func (a *api) DescribeCheck(
 	ctx context.Context,
 	req *desc.DescribeCheckRequest,
 ) (*desc.DescribeCheckResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	err := status.Error(codes.NotFound, errCheckNotFound)
 	return nil, err
 }
