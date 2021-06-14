@@ -34,6 +34,21 @@ func (m *MockCheckRepo) EXPECT() *MockCheckRepoMockRecorder {
 	return m.recorder
 }
 
+// AddCheck mocks base method.
+func (m *MockCheckRepo) AddCheck(arg0 models.Check) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddCheck", arg0)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddCheck indicates an expected call of AddCheck.
+func (mr *MockCheckRepoMockRecorder) AddCheck(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCheck", reflect.TypeOf((*MockCheckRepo)(nil).AddCheck), arg0)
+}
+
 // AddChecks mocks base method.
 func (m *MockCheckRepo) AddChecks(arg0 []models.Check) error {
 	m.ctrl.T.Helper()
