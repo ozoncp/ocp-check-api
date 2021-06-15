@@ -42,7 +42,7 @@ func runGrpcServer(address string) error {
 
 	s := grpc.NewServer(grpczerolog.UnaryInterceptorWithLogger(&log))
 
-	desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(&repo))
+	desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(repo))
 
 	if err := s.Serve(listen); err != nil {
 		log.Fatal().Err(err).Msg("failed to serve")

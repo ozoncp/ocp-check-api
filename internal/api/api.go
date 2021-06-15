@@ -11,7 +11,7 @@ import (
 )
 
 type api struct {
-	repo *repo.CheckRepo
+	repo repo.CheckRepo
 	desc.UnimplementedOcpCheckApiServer
 }
 
@@ -24,7 +24,8 @@ func (a *api) ListChecks(ctx context.Context,
 
 	var checks []models.Check
 	var err error
-	checks, err = (*a.repo).ListChecks(req.Limit, req.Offset)
+
+	checks, err = a.repo.ListChecks(req.Limit, req.Offset)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
@@ -53,9 +54,14 @@ func (a *api) DescribeCheck(
 	var check *models.Check
 	var err error
 
-	check, err = (*a.repo).DescribeCheck(req.CheckId)
+	check, err = a.repo.DescribeCheck(req.CheckId)
 	if err != nil {
-		return nil, status.Error(codes.Unknown, err.Error())
+		switch {
+		case err == repo.CheckNotFound:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Unknown, err.Error())
+		}
 	}
 
 	pbCheck := &desc.Check{
@@ -65,6 +71,7 @@ func (a *api) DescribeCheck(
 		RunnerID:   check.RunnerID,
 		Success:    check.Success,
 	}
+
 	return &desc.DescribeCheckResponse{Check: pbCheck}, nil
 }
 
@@ -84,7 +91,7 @@ func (a *api) CreateCheck(ctx context.Context,
 	}
 
 	var id uint64
-	if id, err = (*a.repo).AddCheck(check); err != nil {
+	if id, err = a.repo.AddCheck(check); err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
@@ -94,15 +101,22 @@ func (a *api) CreateCheck(ctx context.Context,
 func (a *api) RemoveCheck(ctx context.Context,
 	req *desc.RemoveCheckRequest,
 ) (*desc.RemoveCheckResponse, error) {
-	if err := (*a.repo).RemoveCheck(req.CheckId); err != nil {
+
+	var found = true
+
+	err := a.repo.RemoveCheck(req.CheckId)
+	switch {
+	case err == repo.CheckNotFound:
+		found = false
+	case err != nil:
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
 	return &desc.RemoveCheckResponse{
-		Found: true,
+		Found: found,
 	}, nil
 }
 
-func NewOcpCheckApi(repo *repo.CheckRepo) desc.OcpCheckApiServer {
+func NewOcpCheckApi(repo repo.CheckRepo) desc.OcpCheckApiServer {
 	return &api{repo: repo}
 }

@@ -3,10 +3,15 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/ozoncp/ocp-check-api/internal/models"
 	"github.com/rs/zerolog"
+)
+
+var (
+	CheckNotFound = errors.New("check not found")
 )
 
 type CheckRepo interface {
@@ -68,8 +73,13 @@ func (r *checkRepo) DescribeCheck(checkId uint64) (*models.Check, error) {
 
 	check := models.Check{}
 	if err := row.Scan(&check.ID, &check.SolutionID, &check.TestID, &check.RunnerID, &check.Success); err != nil {
-		r.log.Error().Err(err).Msg("")
-		return nil, err
+		switch {
+		case err == sql.ErrNoRows:
+			return nil, CheckNotFound
+		default:
+			r.log.Error().Err(err).Msg("")
+			return nil, err
+		}
 	}
 
 	return &check, nil
@@ -81,9 +91,16 @@ func (r *checkRepo) RemoveCheck(checkId uint64) error {
 		RunWith(r.db).
 		PlaceholderFormat(sq.Dollar)
 
-	_, err := query.ExecContext(*r.ctx)
+	var result sql.Result
+	result, err := query.ExecContext(*r.ctx)
 	if err != nil {
 		r.log.Error().Err(err).Msg("")
+	}
+
+	// no rows affected and no error, it is a case of record not found
+	rows, resultErr := result.RowsAffected()
+	if rows == int64(0) && resultErr == nil {
+		return CheckNotFound
 	}
 
 	return err
