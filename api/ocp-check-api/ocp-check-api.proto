@@ -32,6 +32,20 @@ service OcpCheckApi {
         };
     }
 
+    // Создает несколько "проверок"
+    rpc MultiCreateCheck(MultiCreateCheckRequest) returns (MultiCreateCheckResponse) {
+        option (google.api.http) = {
+            post: "/checks"
+        };
+    }
+
+    // Обновляет "проверку" по идентификатору
+    rpc UpdateCheck(UpdateCheckRequest) returns (UpdateCheckResponse) {
+        option (google.api.http) = {
+            post: "/checks"
+        };
+    }
+
     // Удаляет "проверку" по идентификатору
     rpc RemoveCheck(RemoveCheckRequest) returns (RemoveCheckResponse) {
         option (google.api.http) = {
@@ -49,6 +63,14 @@ message ListChecksResponse {
     repeated Check checks = 1;
 }
 
+message DescribeCheckRequest {
+    uint64 check_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeCheckResponse {
+    Check check = 1;
+}
+
 message CreateCheckRequest {
     uint64 solutionID = 1;
     uint64 testID = 2;
@@ -60,20 +82,28 @@ message CreateCheckResponse {
     uint64 check_id = 1;
 }
 
+message MultiCreateCheckRequest {
+    repeated CreateCheckRequest checks = 1;
+}
+
+message MultiCreateCheckResponse {
+    uint64 created = 1;
+}
+
+message UpdateCheckRequest {
+    Check check = 1;
+}
+
+message UpdateCheckResponse {
+    bool updated = 1;
+}
+
 message RemoveCheckRequest {
     uint64 check_id = 1 [(validate.rules).uint64.gt = 0];
 }
 
 message RemoveCheckResponse {
-    bool found = 1;
-}
-
-message DescribeCheckRequest {
-    uint64 check_id = 1 [(validate.rules).uint64.gt = 0];
-}
-
-message DescribeCheckResponse {
-    Check check = 1;
+    bool deleted = 1;
 }
 
 // Описание структуры "проверка"
@@ -84,3 +114,4 @@ message Check {
     uint64 runnerID = 4;
     bool success = 5;
 }
+

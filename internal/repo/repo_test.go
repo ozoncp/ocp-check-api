@@ -62,7 +62,7 @@ var _ = Describe("Repo", func() {
 	Context("insert multiple checks into database", func() {
 		BeforeEach(func() {
 			mock.ExpectExec("INSERT INTO checks").WithArgs(3, 4, 5, false, 5, 6, 7, true).WillReturnResult(sqlmock.NewResult(1, 2))
-			err = checkRepo.AddChecks([]models.Check{
+			_, err = checkRepo.AddChecks([]models.Check{
 				{SolutionID: 3, TestID: 4, RunnerID: 5, Success: false},
 				{SolutionID: 5, TestID: 6, RunnerID: 7, Success: true},
 			})

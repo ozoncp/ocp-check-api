@@ -50,11 +50,12 @@ func (mr *MockCheckRepoMockRecorder) AddCheck(arg0 interface{}) *gomock.Call {
 }
 
 // AddChecks mocks base method.
-func (m *MockCheckRepo) AddChecks(arg0 []models.Check) error {
+func (m *MockCheckRepo) AddChecks(arg0 []models.Check) (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddChecks", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddChecks indicates an expected call of AddChecks.
@@ -105,6 +106,21 @@ func (m *MockCheckRepo) RemoveCheck(arg0 uint64) error {
 func (mr *MockCheckRepoMockRecorder) RemoveCheck(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCheck", reflect.TypeOf((*MockCheckRepo)(nil).RemoveCheck), arg0)
+}
+
+// UpdateCheck mocks base method.
+func (m *MockCheckRepo) UpdateCheck(arg0 models.Check) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCheck", arg0)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateCheck indicates an expected call of UpdateCheck.
+func (mr *MockCheckRepoMockRecorder) UpdateCheck(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCheck", reflect.TypeOf((*MockCheckRepo)(nil).UpdateCheck), arg0)
 }
 
 // MockTestRepo is a mock of TestRepo interface.

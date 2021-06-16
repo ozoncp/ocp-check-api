@@ -22,7 +22,7 @@ func (f *checkFlusher) Flush(checks []models.Check) []models.Check {
 	}
 
 	for i := 0; i < len(bulks); i = i + 1 {
-		if err := f.checkRepo.AddChecks(bulks[i]); err != nil {
+		if _, err := f.checkRepo.AddChecks(bulks[i]); err != nil {
 			return checks[i*f.chunkSize:]
 		}
 	}

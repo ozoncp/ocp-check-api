@@ -16,7 +16,8 @@ var (
 
 type CheckRepo interface {
 	AddCheck(check models.Check) (uint64, error)
-	AddChecks(checks []models.Check) error
+	AddChecks(checks []models.Check) (uint64, error)
+	UpdateCheck(check models.Check) (bool, error)
 	RemoveCheck(checkId uint64) error
 	DescribeCheck(checkId uint64) (*models.Check, error)
 	ListChecks(limit, offset uint64) ([]models.Check, error)
@@ -85,6 +86,27 @@ func (r *checkRepo) DescribeCheck(checkId uint64) (*models.Check, error) {
 	return &check, nil
 }
 
+func (r *checkRepo) UpdateCheck(check models.Check) (bool, error) {
+	query := sq.Update("checks").
+		Where(sq.Eq{"id": check.ID}).
+		RunWith(r.db).
+		PlaceholderFormat(sq.Dollar)
+
+	var result sql.Result
+	result, err := query.ExecContext(*r.ctx)
+	if err != nil {
+		r.log.Error().Err(err).Msg("")
+	}
+
+	// no rows affected and no error, it is a case of record not found
+	rows, resultErr := result.RowsAffected()
+	if rows == int64(0) && resultErr == nil {
+		return false, CheckNotFound
+	}
+
+	return true, err
+}
+
 func (r *checkRepo) RemoveCheck(checkId uint64) error {
 	query := sq.Delete("checks").
 		Where(sq.Eq{"id": checkId}).
@@ -123,7 +145,7 @@ func (r *checkRepo) AddCheck(check models.Check) (uint64, error) {
 	return uint64(id), err
 }
 
-func (r *checkRepo) AddChecks(checks []models.Check) error {
+func (r *checkRepo) AddChecks(checks []models.Check) (uint64, error) {
 	query := sq.Insert("checks").
 		Columns("solution_id", "test_id", "runner_id", "success").
 		RunWith(r.db).
@@ -133,12 +155,13 @@ func (r *checkRepo) AddChecks(checks []models.Check) error {
 		query = query.Values(check.SolutionID, check.TestID, check.RunnerID, check.Success)
 	}
 
-	_, err := query.ExecContext(*r.ctx)
+	result, err := query.ExecContext(*r.ctx)
+	affected, _ := result.RowsAffected()
 	if err != nil {
 		r.log.Error().Err(err).Msg("")
 	}
 
-	return err
+	return uint64(affected), err
 }
 
 func NewCheckRepo(ctx *context.Context, db *sql.DB, log *zerolog.Logger) CheckRepo {

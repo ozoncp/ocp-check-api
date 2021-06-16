@@ -6,16 +6,22 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/rs/zerolog"
 
 	"github.com/ozoncp/ocp-check-api/internal/api"
 	"github.com/ozoncp/ocp-check-api/internal/mocks"
+	"github.com/ozoncp/ocp-check-api/internal/producer"
+	"github.com/ozoncp/ocp-check-api/internal/prometheus"
 	desc "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api"
 )
 
 var _ = Describe("Api", func() {
 	var (
-		ctrl *gomock.Controller
-		ctx  context.Context
+		ctrl     *gomock.Controller
+		ctx      context.Context
+		log      zerolog.Logger
+		producer producer.Producer
+		metrics  prometheus.Prometheus
 
 		mockRepo *mocks.MockCheckRepo
 		grpcApi  desc.OcpCheckApiServer
@@ -29,7 +35,7 @@ var _ = Describe("Api", func() {
 		ctx = context.Background()
 
 		mockRepo = mocks.NewMockCheckRepo(ctrl)
-		grpcApi = api.NewOcpCheckApi(mockRepo)
+		grpcApi = api.NewOcpCheckApi(100, log, mockRepo, producer, metrics)
 
 		createReq = &desc.CreateCheckRequest{SolutionID: 2, TestID: 3, RunnerID: 4, Success: false}
 	})
