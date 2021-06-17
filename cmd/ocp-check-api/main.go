@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 	api "github.com/ozoncp/ocp-check-api/internal/api"
 	"github.com/ozoncp/ocp-check-api/internal/producer"
 	prom "github.com/ozoncp/ocp-check-api/internal/prometheus"
@@ -74,7 +74,7 @@ func initOpentracing(log zerolog.Logger) {
 func runGrpcServer(address string) error {
 	log := zerolog.New(os.Stdout)
 	ctx := context.Background()
-	db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
+	db, err := sqlx.Open("pgx", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Panic().Err(err).Msg("Unable to connect to database")
 	}
@@ -82,7 +82,7 @@ func runGrpcServer(address string) error {
 
 	initOpentracing(log)
 
-	repo := repo.NewCheckRepo(&ctx, db, &log)
+	repo := repo.NewCheckRepo(db, &log)
 
 	producer, err := producer.NewProducer(ctx)
 	if err != nil {

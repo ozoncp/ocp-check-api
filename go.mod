@@ -13,6 +13,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/jackc/pgx/v4 v4.11.0
+	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.13.0
 	github.com/opentracing/opentracing-go v1.2.0

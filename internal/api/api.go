@@ -21,7 +21,7 @@ type api struct {
 	log       zerolog.Logger
 	repo      repo.CheckRepo
 	producer  producer.Producer
-	metrics   prometheus.Prometheus
+	prom      prometheus.Prometheus
 	desc.UnimplementedOcpCheckApiServer
 }
 
@@ -39,7 +39,7 @@ func (a *api) ListChecks(ctx context.Context,
 	var checks []models.Check
 	var err error
 
-	checks, err = a.repo.ListChecks(req.Limit, req.Offset)
+	checks, err = a.repo.ListChecks(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
@@ -68,7 +68,7 @@ func (a *api) DescribeCheck(
 	var check *models.Check
 	var err error
 
-	check, err = a.repo.DescribeCheck(req.CheckId)
+	check, err = a.repo.DescribeCheck(ctx, req.CheckId)
 	if err != nil {
 		switch {
 		case err == repo.CheckNotFound:
@@ -105,14 +105,14 @@ func (a *api) CreateCheck(ctx context.Context,
 	}
 
 	var id uint64
-	if id, err = a.repo.AddCheck(check); err != nil {
+	if id, err = a.repo.CreateCheck(ctx, check); err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
 	if id != 0 {
 		check.ID = id
 		_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Created, Event: check})
-		a.metrics.IncCreateCheck("success")
+		a.prom.IncCreateCheck("success")
 	}
 
 	return &desc.CreateCheckResponse{CheckId: id}, nil
@@ -151,7 +151,7 @@ func (a *api) MultiCreateCheck(ctx context.Context,
 		childSpan.SetTag("batchSize", fmt.Sprintf("%v", len(batch)))
 		defer childSpan.Finish()
 
-		createdChecks, err := a.repo.AddChecks(batch)
+		createdChecks, err := a.repo.MultiCreateCheck(ctx, batch)
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
@@ -173,7 +173,7 @@ func (a *api) UpdateCheck(ctx context.Context,
 		Success:    req.Check.Success,
 	}
 
-	updated, err := a.repo.UpdateCheck(updatedCheck)
+	updated, err := a.repo.UpdateCheck(ctx, updatedCheck)
 	switch {
 	case err == repo.CheckNotFound:
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -183,7 +183,7 @@ func (a *api) UpdateCheck(ctx context.Context,
 
 	if updated {
 		_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Updated, Event: updatedCheck})
-		a.metrics.IncUpdateCheck("success")
+		a.prom.IncUpdateCheck("success")
 	}
 
 	return &desc.UpdateCheckResponse{
@@ -197,7 +197,7 @@ func (a *api) RemoveCheck(ctx context.Context,
 
 	var found = true
 
-	err := a.repo.RemoveCheck(req.CheckId)
+	err := a.repo.RemoveCheck(ctx, req.CheckId)
 	switch {
 	case err == repo.CheckNotFound:
 		found = false
@@ -208,7 +208,7 @@ func (a *api) RemoveCheck(ctx context.Context,
 	if found {
 		deletedCheck := models.Check{ID: req.CheckId}
 		_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Deleted, Event: deletedCheck})
-		a.metrics.IncDeleteCheck("success")
+		a.prom.IncDeleteCheck("success")
 	}
 
 	return &desc.RemoveCheckResponse{
@@ -216,6 +216,6 @@ func (a *api) RemoveCheck(ctx context.Context,
 	}, nil
 }
 
-func NewOcpCheckApi(batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, metrics prometheus.Prometheus) desc.OcpCheckApiServer {
-	return &api{batchSize: batchSize, log: log, repo: repo, producer: producer, metrics: metrics}
+func NewOcpCheckApi(batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus) desc.OcpCheckApiServer {
+	return &api{batchSize: batchSize, log: log, repo: repo, producer: producer, prom: prom}
 }

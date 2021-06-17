@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/ozoncp/ocp-check-api/internal/models"
@@ -23,7 +24,8 @@ var _ = Describe("Repo", func() {
 	var (
 		mock      sqlmock.Sqlmock
 		ctx       context.Context
-		db        *sql.DB
+		mockDb    *sql.DB
+		db        *sqlx.DB
 		id        uint64
 		err       error
 		checkRepo repo.CheckRepo
@@ -31,14 +33,16 @@ var _ = Describe("Repo", func() {
 	)
 
 	BeforeEach(func() {
-		db, mock, err = sqlmock.New() // mock sql.DB
+		mockDb, mock, err = sqlmock.New() // mock sql.DB
+		db = sqlx.NewDb(mockDb, "sqlmock")
 		ctx = context.Background()
 		log = zerolog.New(os.Stdout)
 		//log.Output(ioutil.Discard)
-		checkRepo = repo.NewCheckRepo(&ctx, db, &log)
+		checkRepo = repo.NewCheckRepo(db, &log)
 	})
 
 	AfterEach(func() {
+		defer mockDb.Close()
 		defer db.Close()
 		err = mock.ExpectationsWereMet() // make sure all expectations were met
 		Expect(err).ShouldNot(HaveOccurred())
@@ -50,7 +54,7 @@ var _ = Describe("Repo", func() {
 		)
 		BeforeEach(func() {
 			mock.ExpectExec("INSERT INTO checks").WithArgs(3, 4, 5, false).WillReturnResult(sqlmock.NewResult(int64(newId), 1))
-			id, err = checkRepo.AddCheck(models.Check{SolutionID: 3, TestID: 4, RunnerID: 5, Success: false})
+			id, err = checkRepo.CreateCheck(ctx, models.Check{SolutionID: 3, TestID: 4, RunnerID: 5, Success: false})
 		})
 
 		It("", func() {
@@ -62,7 +66,7 @@ var _ = Describe("Repo", func() {
 	Context("insert multiple checks into database", func() {
 		BeforeEach(func() {
 			mock.ExpectExec("INSERT INTO checks").WithArgs(3, 4, 5, false, 5, 6, 7, true).WillReturnResult(sqlmock.NewResult(1, 2))
-			_, err = checkRepo.AddChecks([]models.Check{
+			_, err = checkRepo.MultiCreateCheck(ctx, []models.Check{
 				{SolutionID: 3, TestID: 4, RunnerID: 5, Success: false},
 				{SolutionID: 5, TestID: 6, RunnerID: 7, Success: true},
 			})
@@ -84,7 +88,7 @@ var _ = Describe("Repo", func() {
 			mockRows := sqlmock.NewRows([]string{"id", "solution_id", "test_id", "runner_id", "success"}).
 				AddRow(checkId, 2, 3, 4, false)
 			mock.ExpectQuery("SELECT id, solution_id, test_id, runner_id, success FROM checks").WithArgs(checkId).WillReturnRows(mockRows)
-			check, err = checkRepo.DescribeCheck(checkId)
+			check, err = checkRepo.DescribeCheck(ctx, checkId)
 		})
 
 		It("", func() {
@@ -106,7 +110,7 @@ var _ = Describe("Repo", func() {
 				AddRow(1, 2, 3, 4, false).AddRow(2, 3, 4, 5, true)
 			mock.ExpectQuery(fmt.Sprintf("SELECT id, solution_id, test_id, runner_id, success FROM checks LIMIT %v OFFSET %v",
 				limit, offset)).WillReturnRows(mockRows)
-			checks, err = checkRepo.ListChecks(limit, offset)
+			checks, err = checkRepo.ListChecks(ctx, limit, offset)
 		})
 
 		It("", func() {
@@ -118,7 +122,7 @@ var _ = Describe("Repo", func() {
 	Context("remove unexisting check will result an error", func() {
 		BeforeEach(func() {
 			mock.ExpectExec("DELETE FROM checks").WithArgs(1).WillReturnError(errors.New(errNotFound))
-			err = checkRepo.RemoveCheck(1)
+			err = checkRepo.RemoveCheck(ctx, 1)
 		})
 
 		It("", func() {

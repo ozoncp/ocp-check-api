@@ -49,7 +49,7 @@ var _ = Describe("Api", func() {
 			createResp *desc.CreateCheckResponse
 		)
 		BeforeEach(func() {
-			mockRepo.EXPECT().AddCheck(gomock.Any()).MinTimes(1).Return(newId, nil)
+			mockRepo.EXPECT().CreateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(newId, nil)
 			createResp, err = grpcApi.CreateCheck(ctx, createReq)
 		})
 

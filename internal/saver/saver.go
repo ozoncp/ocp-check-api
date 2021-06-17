@@ -1,29 +1,36 @@
 package saver
 
 import (
+	"context"
 	"time"
 
+	"github.com/ozoncp/ocp-check-api/internal/alarmer"
 	"github.com/ozoncp/ocp-check-api/internal/flusher"
 	"github.com/ozoncp/ocp-check-api/internal/models"
 )
 
 type Saver interface {
 	Save(entity models.Check) error
-	Init()
+	Init() error
 	Close()
 }
 
 // Saver с поддержкой периодического сохранения
 type checkSaverPeriodic struct {
+	ctx      context.Context
+	alarmer  alarmer.Alarmer
 	flusher  flusher.CheckFlusher
 	checksCh chan models.Check
-	closeCh  chan bool
-	ticker   *time.Ticker
+	closeCh  chan struct{}
+	doneCh   chan struct{}
 }
 
-func (c *checkSaverPeriodic) Init() {
+func (c *checkSaverPeriodic) Init() error {
 	var entities []models.Check
 
+	if err := c.alarmer.Init(); err != nil {
+		return err
+	}
 	// Flush на закрытие или по тику
 	go func() {
 		for {
@@ -31,13 +38,16 @@ func (c *checkSaverPeriodic) Init() {
 			case e := <-c.checksCh:
 				entities = append(entities, e)
 			case <-c.closeCh:
-				_ = (c.flusher).Flush(entities)
+				_ = (c.flusher).Flush(c.ctx, entities)
+				c.doneCh <- struct{}{}
 				return
-			case <-c.ticker.C:
-				entities = (c.flusher).Flush(entities)
+			case <-c.alarmer.Alarm():
+				entities = (c.flusher).Flush(c.ctx, entities)
 			}
 		}
 	}()
+
+	return nil
 }
 
 // Метод для сохранения сущности
@@ -48,16 +58,24 @@ func (c *checkSaverPeriodic) Save(check models.Check) error {
 
 // Закрытие Saver-a: останавливаем тикер, передаем в канал о закрытии и ждем завершения
 func (c *checkSaverPeriodic) Close() {
-	c.ticker.Stop()
-	c.closeCh <- true
+	c.alarmer.Close()
+	c.closeCh <- struct{}{}
+	<-c.doneCh
 }
 
 // NewSaver возвращает Saver с поддержкой периодического сохранения
-func NewSaver(capacity uint, period time.Duration, flusher flusher.CheckFlusher) Saver {
+func NewSaver(ctx context.Context, capacity uint, period time.Duration, alarmer alarmer.Alarmer, flusher flusher.CheckFlusher) Saver {
 	// Capacity задается параметром Saver-a
 	checksCh := make(chan models.Check, capacity)
-	closeCh := make(chan bool)
-	ticker := time.NewTicker(period)
+	closeCh := make(chan struct{})
+	doneCh := make(chan struct{})
 
-	return &checkSaverPeriodic{flusher, checksCh, closeCh, ticker}
+	return &checkSaverPeriodic{
+		ctx:      ctx,
+		alarmer:  alarmer,
+		flusher:  flusher,
+		checksCh: checksCh,
+		closeCh:  closeCh,
+		doneCh:   doneCh,
+	}
 }
