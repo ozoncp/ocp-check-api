@@ -186,6 +186,157 @@ var _ interface {
 	ErrorName() string
 } = ListChecksResponseValidationError{}
 
+// Validate checks the field values on DescribeCheckRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *DescribeCheckRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if m.GetCheckId() <= 0 {
+		return DescribeCheckRequestValidationError{
+			field:  "CheckId",
+			reason: "value must be greater than 0",
+		}
+	}
+
+	return nil
+}
+
+// DescribeCheckRequestValidationError is the validation error returned by
+// DescribeCheckRequest.Validate if the designated constraints aren't met.
+type DescribeCheckRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DescribeCheckRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DescribeCheckRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DescribeCheckRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DescribeCheckRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DescribeCheckRequestValidationError) ErrorName() string {
+	return "DescribeCheckRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DescribeCheckRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDescribeCheckRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DescribeCheckRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DescribeCheckRequestValidationError{}
+
+// Validate checks the field values on DescribeCheckResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *DescribeCheckResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetCheck()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DescribeCheckResponseValidationError{
+				field:  "Check",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// DescribeCheckResponseValidationError is the validation error returned by
+// DescribeCheckResponse.Validate if the designated constraints aren't met.
+type DescribeCheckResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DescribeCheckResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DescribeCheckResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DescribeCheckResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DescribeCheckResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DescribeCheckResponseValidationError) ErrorName() string {
+	return "DescribeCheckResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DescribeCheckResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDescribeCheckResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DescribeCheckResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DescribeCheckResponseValidationError{}
+
 // Validate checks the field values on CreateCheckRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -330,6 +481,303 @@ var _ interface {
 	ErrorName() string
 } = CreateCheckResponseValidationError{}
 
+// Validate checks the field values on MultiCreateCheckRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateCheckRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetChecks() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MultiCreateCheckRequestValidationError{
+					field:  fmt.Sprintf("Checks[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// MultiCreateCheckRequestValidationError is the validation error returned by
+// MultiCreateCheckRequest.Validate if the designated constraints aren't met.
+type MultiCreateCheckRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateCheckRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateCheckRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateCheckRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateCheckRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateCheckRequestValidationError) ErrorName() string {
+	return "MultiCreateCheckRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateCheckRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateCheckRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateCheckRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateCheckRequestValidationError{}
+
+// Validate checks the field values on MultiCreateCheckResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateCheckResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Created
+
+	return nil
+}
+
+// MultiCreateCheckResponseValidationError is the validation error returned by
+// MultiCreateCheckResponse.Validate if the designated constraints aren't met.
+type MultiCreateCheckResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateCheckResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateCheckResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateCheckResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateCheckResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateCheckResponseValidationError) ErrorName() string {
+	return "MultiCreateCheckResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateCheckResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateCheckResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateCheckResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateCheckResponseValidationError{}
+
+// Validate checks the field values on UpdateCheckRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateCheckRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetCheck()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateCheckRequestValidationError{
+				field:  "Check",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateCheckRequestValidationError is the validation error returned by
+// UpdateCheckRequest.Validate if the designated constraints aren't met.
+type UpdateCheckRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateCheckRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateCheckRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateCheckRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateCheckRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateCheckRequestValidationError) ErrorName() string {
+	return "UpdateCheckRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateCheckRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateCheckRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateCheckRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateCheckRequestValidationError{}
+
+// Validate checks the field values on UpdateCheckResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateCheckResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Updated
+
+	return nil
+}
+
+// UpdateCheckResponseValidationError is the validation error returned by
+// UpdateCheckResponse.Validate if the designated constraints aren't met.
+type UpdateCheckResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateCheckResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateCheckResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateCheckResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateCheckResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateCheckResponseValidationError) ErrorName() string {
+	return "UpdateCheckResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateCheckResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateCheckResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateCheckResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateCheckResponseValidationError{}
+
 // Validate checks the field values on RemoveCheckRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -412,7 +860,7 @@ func (m *RemoveCheckResponse) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Found
+	// no validation rules for Deleted
 
 	return nil
 }
@@ -472,157 +920,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RemoveCheckResponseValidationError{}
-
-// Validate checks the field values on DescribeCheckRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *DescribeCheckRequest) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	if m.GetCheckId() == 0 {
-		return DescribeCheckRequestValidationError{
-			field:  "CheckId",
-			reason: "value must be greater than 0",
-		}
-	}
-
-	return nil
-}
-
-// DescribeCheckRequestValidationError is the validation error returned by
-// DescribeCheckRequest.Validate if the designated constraints aren't met.
-type DescribeCheckRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e DescribeCheckRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e DescribeCheckRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e DescribeCheckRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e DescribeCheckRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e DescribeCheckRequestValidationError) ErrorName() string {
-	return "DescribeCheckRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e DescribeCheckRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sDescribeCheckRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = DescribeCheckRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = DescribeCheckRequestValidationError{}
-
-// Validate checks the field values on DescribeCheckResponse with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *DescribeCheckResponse) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	if v, ok := interface{}(m.GetCheck()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return DescribeCheckResponseValidationError{
-				field:  "Check",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	return nil
-}
-
-// DescribeCheckResponseValidationError is the validation error returned by
-// DescribeCheckResponse.Validate if the designated constraints aren't met.
-type DescribeCheckResponseValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e DescribeCheckResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e DescribeCheckResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e DescribeCheckResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e DescribeCheckResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e DescribeCheckResponseValidationError) ErrorName() string {
-	return "DescribeCheckResponseValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e DescribeCheckResponseValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sDescribeCheckResponse.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = DescribeCheckResponseValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = DescribeCheckResponseValidationError{}
 
 // Validate checks the field values on Check with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.

@@ -1,6 +1,7 @@
 package flusher_test
 
 import (
+	"context"
 	"errors"
 
 	"github.com/golang/mock/gomock"
@@ -16,6 +17,7 @@ var _ = Describe("Flusher", func() {
 	var (
 		timeOutError = errors.New("timeout elapsed")
 		ctrl         *gomock.Controller
+		ctx          context.Context
 
 		mockRepo  *mocks.MockTestRepo
 		f         flusher.TestFlusher
@@ -26,12 +28,14 @@ var _ = Describe("Flusher", func() {
 
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
+		ctx = context.Background()
+
 		mockRepo = mocks.NewMockTestRepo(ctrl)
 	})
 
 	JustBeforeEach(func() {
 		f = flusher.NewTestFlusher(chunkSize, mockRepo)
-		remained = f.Flush(tests)
+		remained = f.Flush(ctx, tests)
 	})
 
 	AfterEach(func() {
@@ -41,8 +45,10 @@ var _ = Describe("Flusher", func() {
 	Context("save all tests in repo", func() {
 		BeforeEach(func() {
 			tests = []models.Test{{}, {}, {}}
-
-			mockRepo.EXPECT().AddTests(gomock.Any()).Return(nil).MinTimes(2)
+			gomock.InOrder(
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Any()).Return(uint64(chunkSize), nil),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Any()).Return(uint64(len(tests)-chunkSize), nil),
+			)
 		})
 
 		It("", func() {
@@ -54,7 +60,7 @@ var _ = Describe("Flusher", func() {
 		BeforeEach(func() {
 			tests = []models.Test{{}, {}}
 
-			mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(timeOutError)
+			mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(uint64(0), timeOutError)
 		})
 
 		It("", func() {
@@ -68,8 +74,8 @@ var _ = Describe("Flusher", func() {
 			tests = []models.Test{{}, {}, {}, {}, {}}
 
 			gomock.InOrder(
-				mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(nil),
-				mockRepo.EXPECT().AddTests(gomock.Len(chunkSize)).Return(timeOutError),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(uint64(chunkSize), nil),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(uint64(0), timeOutError),
 			)
 		})
 

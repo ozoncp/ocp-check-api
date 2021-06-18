@@ -24,6 +24,10 @@ type OcpCheckApiClient interface {
 	DescribeCheck(ctx context.Context, in *DescribeCheckRequest, opts ...grpc.CallOption) (*DescribeCheckResponse, error)
 	// Создает новую "проверку"
 	CreateCheck(ctx context.Context, in *CreateCheckRequest, opts ...grpc.CallOption) (*CreateCheckResponse, error)
+	// Создает несколько "проверок"
+	MultiCreateCheck(ctx context.Context, in *MultiCreateCheckRequest, opts ...grpc.CallOption) (*MultiCreateCheckResponse, error)
+	// Обновляет "проверку" по идентификатору
+	UpdateCheck(ctx context.Context, in *UpdateCheckRequest, opts ...grpc.CallOption) (*UpdateCheckResponse, error)
 	// Удаляет "проверку" по идентификатору
 	RemoveCheck(ctx context.Context, in *RemoveCheckRequest, opts ...grpc.CallOption) (*RemoveCheckResponse, error)
 }
@@ -63,6 +67,24 @@ func (c *ocpCheckApiClient) CreateCheck(ctx context.Context, in *CreateCheckRequ
 	return out, nil
 }
 
+func (c *ocpCheckApiClient) MultiCreateCheck(ctx context.Context, in *MultiCreateCheckRequest, opts ...grpc.CallOption) (*MultiCreateCheckResponse, error) {
+	out := new(MultiCreateCheckResponse)
+	err := c.cc.Invoke(ctx, "/ocp.check.api.OcpCheckApi/MultiCreateCheck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ocpCheckApiClient) UpdateCheck(ctx context.Context, in *UpdateCheckRequest, opts ...grpc.CallOption) (*UpdateCheckResponse, error) {
+	out := new(UpdateCheckResponse)
+	err := c.cc.Invoke(ctx, "/ocp.check.api.OcpCheckApi/UpdateCheck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *ocpCheckApiClient) RemoveCheck(ctx context.Context, in *RemoveCheckRequest, opts ...grpc.CallOption) (*RemoveCheckResponse, error) {
 	out := new(RemoveCheckResponse)
 	err := c.cc.Invoke(ctx, "/ocp.check.api.OcpCheckApi/RemoveCheck", in, out, opts...)
@@ -82,6 +104,10 @@ type OcpCheckApiServer interface {
 	DescribeCheck(context.Context, *DescribeCheckRequest) (*DescribeCheckResponse, error)
 	// Создает новую "проверку"
 	CreateCheck(context.Context, *CreateCheckRequest) (*CreateCheckResponse, error)
+	// Создает несколько "проверок"
+	MultiCreateCheck(context.Context, *MultiCreateCheckRequest) (*MultiCreateCheckResponse, error)
+	// Обновляет "проверку" по идентификатору
+	UpdateCheck(context.Context, *UpdateCheckRequest) (*UpdateCheckResponse, error)
 	// Удаляет "проверку" по идентификатору
 	RemoveCheck(context.Context, *RemoveCheckRequest) (*RemoveCheckResponse, error)
 	mustEmbedUnimplementedOcpCheckApiServer()
@@ -99,6 +125,12 @@ func (UnimplementedOcpCheckApiServer) DescribeCheck(context.Context, *DescribeCh
 }
 func (UnimplementedOcpCheckApiServer) CreateCheck(context.Context, *CreateCheckRequest) (*CreateCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCheck not implemented")
+}
+func (UnimplementedOcpCheckApiServer) MultiCreateCheck(context.Context, *MultiCreateCheckRequest) (*MultiCreateCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MultiCreateCheck not implemented")
+}
+func (UnimplementedOcpCheckApiServer) UpdateCheck(context.Context, *UpdateCheckRequest) (*UpdateCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCheck not implemented")
 }
 func (UnimplementedOcpCheckApiServer) RemoveCheck(context.Context, *RemoveCheckRequest) (*RemoveCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveCheck not implemented")
@@ -170,6 +202,42 @@ func _OcpCheckApi_CreateCheck_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OcpCheckApi_MultiCreateCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MultiCreateCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpCheckApiServer).MultiCreateCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.check.api.OcpCheckApi/MultiCreateCheck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpCheckApiServer).MultiCreateCheck(ctx, req.(*MultiCreateCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OcpCheckApi_UpdateCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpCheckApiServer).UpdateCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.check.api.OcpCheckApi/UpdateCheck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpCheckApiServer).UpdateCheck(ctx, req.(*UpdateCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OcpCheckApi_RemoveCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveCheckRequest)
 	if err := dec(in); err != nil {
@@ -206,6 +274,14 @@ var OcpCheckApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateCheck",
 			Handler:    _OcpCheckApi_CreateCheck_Handler,
+		},
+		{
+			MethodName: "MultiCreateCheck",
+			Handler:    _OcpCheckApi_MultiCreateCheck_Handler,
+		},
+		{
+			MethodName: "UpdateCheck",
+			Handler:    _OcpCheckApi_UpdateCheck_Handler,
 		},
 		{
 			MethodName: "RemoveCheck",

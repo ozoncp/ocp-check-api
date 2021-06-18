@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/jmoiron/sqlx"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/ozoncp/ocp-check-api/internal/models"
 	"github.com/rs/zerolog"
@@ -15,34 +17,36 @@ var (
 )
 
 type CheckRepo interface {
-	AddCheck(check models.Check) (uint64, error)
-	AddChecks(checks []models.Check) error
-	RemoveCheck(checkId uint64) error
-	DescribeCheck(checkId uint64) (*models.Check, error)
-	ListChecks(limit, offset uint64) ([]models.Check, error)
+	CreateCheck(ctx context.Context, check models.Check) (uint64, error)
+	MultiCreateCheck(ctx context.Context, checks []models.Check) (uint64, error)
+	UpdateCheck(ctx context.Context, check models.Check) (bool, error)
+	RemoveCheck(ctx context.Context, checkId uint64) error
+	DescribeCheck(ctx context.Context, checkId uint64) (*models.Check, error)
+	ListChecks(ctx context.Context, limit, offset uint64) ([]models.Check, error)
 }
 
 type TestRepo interface {
-	AddTests(tests []models.Test) error
-	RemoveTest(testId uint64) error
-	DescribeTest(testId uint64) (*models.Test, error)
-	ListTests(limit, offset uint64) ([]models.Test, error)
+	CreateTest(ctx context.Context, test models.Test) (uint64, error)
+	MultiCreateTest(ctx context.Context, tests []models.Test) (uint64, error)
+	UpdateTest(ctx context.Context, test models.Test) (bool, error)
+	RemoveTest(ctx context.Context, testId uint64) error
+	DescribeTest(ctx context.Context, testId uint64) (*models.Test, error)
+	ListTests(ctx context.Context, limit, offset uint64) ([]models.Test, error)
 }
 
 type checkRepo struct {
-	db  *sql.DB
-	ctx *context.Context
+	db  *sqlx.DB
 	log *zerolog.Logger
 }
 
-func (r *checkRepo) ListChecks(limit, offset uint64) ([]models.Check, error) {
+func (r *checkRepo) ListChecks(ctx context.Context, limit, offset uint64) ([]models.Check, error) {
 	query := sq.Select("id", "solution_id", "test_id", "runner_id", "success").
 		From("checks").
 		RunWith(r.db).
 		Limit(limit).
 		Offset(offset).
 		PlaceholderFormat(sq.Dollar)
-	rows, err := query.QueryContext(*r.ctx)
+	rows, err := query.QueryContext(ctx)
 	if err != nil {
 		r.log.Error().Err(err).Msg("")
 		return nil, err
@@ -63,13 +67,13 @@ func (r *checkRepo) ListChecks(limit, offset uint64) ([]models.Check, error) {
 	return checks, nil
 }
 
-func (r *checkRepo) DescribeCheck(checkId uint64) (*models.Check, error) {
+func (r *checkRepo) DescribeCheck(ctx context.Context, checkId uint64) (*models.Check, error) {
 	query := sq.Select("id", "solution_id", "test_id", "runner_id", "success").
 		From("checks").
 		Where(sq.Eq{"id": checkId}).
 		RunWith(r.db).
 		PlaceholderFormat(sq.Dollar)
-	row := query.QueryRowContext(*r.ctx)
+	row := query.QueryRowContext(ctx)
 
 	check := models.Check{}
 	if err := row.Scan(&check.ID, &check.SolutionID, &check.TestID, &check.RunnerID, &check.Success); err != nil {
@@ -85,16 +89,38 @@ func (r *checkRepo) DescribeCheck(checkId uint64) (*models.Check, error) {
 	return &check, nil
 }
 
-func (r *checkRepo) RemoveCheck(checkId uint64) error {
+func (r *checkRepo) UpdateCheck(ctx context.Context, check models.Check) (bool, error) {
+	query := sq.Update("checks").
+		Where(sq.Eq{"id": check.ID}).
+		RunWith(r.db).
+		PlaceholderFormat(sq.Dollar)
+
+	var result sql.Result
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		r.log.Error().Err(err).Msg("")
+	}
+
+	// no rows affected and no error, it is a case of record not found
+	rows, resultErr := result.RowsAffected()
+	if rows == int64(0) && resultErr == nil {
+		return false, CheckNotFound
+	}
+
+	return true, err
+}
+
+func (r *checkRepo) RemoveCheck(ctx context.Context, checkId uint64) error {
 	query := sq.Delete("checks").
 		Where(sq.Eq{"id": checkId}).
 		RunWith(r.db).
 		PlaceholderFormat(sq.Dollar)
 
 	var result sql.Result
-	result, err := query.ExecContext(*r.ctx)
+	result, err := query.ExecContext(ctx)
 	if err != nil {
 		r.log.Error().Err(err).Msg("")
+		return err
 	}
 
 	// no rows affected and no error, it is a case of record not found
@@ -103,10 +129,10 @@ func (r *checkRepo) RemoveCheck(checkId uint64) error {
 		return CheckNotFound
 	}
 
-	return err
+	return nil
 }
 
-func (r *checkRepo) AddCheck(check models.Check) (uint64, error) {
+func (r *checkRepo) CreateCheck(ctx context.Context, check models.Check) (uint64, error) {
 	query := sq.Insert("checks").
 		Columns("solution_id", "test_id", "runner_id", "success").
 		RunWith(r.db).
@@ -114,7 +140,7 @@ func (r *checkRepo) AddCheck(check models.Check) (uint64, error) {
 
 	query = query.Values(check.SolutionID, check.TestID, check.RunnerID, check.Success)
 
-	result, err := query.ExecContext(*r.ctx)
+	result, err := query.ExecContext(ctx)
 	if err != nil {
 		r.log.Error().Err(err).Msg("")
 	}
@@ -123,7 +149,7 @@ func (r *checkRepo) AddCheck(check models.Check) (uint64, error) {
 	return uint64(id), err
 }
 
-func (r *checkRepo) AddChecks(checks []models.Check) error {
+func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check) (uint64, error) {
 	query := sq.Insert("checks").
 		Columns("solution_id", "test_id", "runner_id", "success").
 		RunWith(r.db).
@@ -133,14 +159,15 @@ func (r *checkRepo) AddChecks(checks []models.Check) error {
 		query = query.Values(check.SolutionID, check.TestID, check.RunnerID, check.Success)
 	}
 
-	_, err := query.ExecContext(*r.ctx)
+	result, err := query.ExecContext(ctx)
+	affected, _ := result.RowsAffected()
 	if err != nil {
 		r.log.Error().Err(err).Msg("")
 	}
 
-	return err
+	return uint64(affected), err
 }
 
-func NewCheckRepo(ctx *context.Context, db *sql.DB, log *zerolog.Logger) CheckRepo {
-	return &checkRepo{db: db, ctx: ctx, log: log}
+func NewCheckRepo(db *sqlx.DB, log *zerolog.Logger) CheckRepo {
+	return &checkRepo{db: db, log: log}
 }
