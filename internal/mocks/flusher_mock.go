@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,17 +36,17 @@ func (m *MockCheckFlusher) EXPECT() *MockCheckFlusherMockRecorder {
 }
 
 // Flush mocks base method.
-func (m *MockCheckFlusher) Flush(arg0 []models.Check) []models.Check {
+func (m *MockCheckFlusher) Flush(arg0 context.Context, arg1 []models.Check) []models.Check {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Flush", arg0)
+	ret := m.ctrl.Call(m, "Flush", arg0, arg1)
 	ret0, _ := ret[0].([]models.Check)
 	return ret0
 }
 
 // Flush indicates an expected call of Flush.
-func (mr *MockCheckFlusherMockRecorder) Flush(arg0 interface{}) *gomock.Call {
+func (mr *MockCheckFlusherMockRecorder) Flush(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockCheckFlusher)(nil).Flush), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockCheckFlusher)(nil).Flush), arg0, arg1)
 }
 
 // MockTestFlusher is a mock of TestFlusher interface.
@@ -72,15 +73,15 @@ func (m *MockTestFlusher) EXPECT() *MockTestFlusherMockRecorder {
 }
 
 // Flush mocks base method.
-func (m *MockTestFlusher) Flush(arg0 []models.Test) []models.Test {
+func (m *MockTestFlusher) Flush(arg0 context.Context, arg1 []models.Test) []models.Test {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Flush", arg0)
+	ret := m.ctrl.Call(m, "Flush", arg0, arg1)
 	ret0, _ := ret[0].([]models.Test)
 	return ret0
 }
 
 // Flush indicates an expected call of Flush.
-func (mr *MockTestFlusherMockRecorder) Flush(arg0 interface{}) *gomock.Call {
+func (mr *MockTestFlusherMockRecorder) Flush(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockTestFlusher)(nil).Flush), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockTestFlusher)(nil).Flush), arg0, arg1)
 }

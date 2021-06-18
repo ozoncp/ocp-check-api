@@ -64,3 +64,10 @@ install-go-deps: .install-go-deps
 		go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 		go install github.com/envoyproxy/protoc-gen-validate
+
+.PHONY: install-migrate
+install-migrate: .install-migrate
+
+.PHONY: .install-migrate
+.install-migrate:
+		curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz && mv ./migrate.linux-amd64 ./migrate

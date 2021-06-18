@@ -50,13 +50,13 @@
         ]
       },
       "post": {
-        "summary": "Создает новую \"проверку\"",
-        "operationId": "OcpCheckApi_CreateCheck",
+        "summary": "Обновляет \"проверку\" по идентификатору",
+        "operationId": "OcpCheckApi_UpdateCheck",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiCreateCheckResponse"
+              "$ref": "#/definitions/apiUpdateCheckResponse"
             }
           },
           "default": {
@@ -160,6 +160,26 @@
       },
       "title": "Описание структуры \"проверка\""
     },
+    "apiCreateCheckRequest": {
+      "type": "object",
+      "properties": {
+        "solutionID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "testID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "runnerID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
     "apiCreateCheckResponse": {
       "type": "object",
       "properties": {
@@ -188,10 +208,27 @@
         }
       }
     },
+    "apiMultiCreateCheckResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "apiRemoveCheckResponse": {
       "type": "object",
       "properties": {
-        "found": {
+        "deleted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "apiUpdateCheckResponse": {
+      "type": "object",
+      "properties": {
+        "updated": {
           "type": "boolean"
         }
       }
