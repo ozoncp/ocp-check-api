@@ -1,61 +1,61 @@
 package alarmer
 
 import (
+	"context"
 	"time"
 )
 
 type Alarmer interface {
 	Alarm() <-chan struct{}
-	Init() error
+	Init()
 	Close()
 }
 
 type alarmer struct {
-	duration time.Duration
-	alarm    chan struct{}
-	end      chan struct{}
+	ctx    context.Context
+	period time.Duration
+	alarms chan struct{}
+	done   chan struct{}
 }
 
-func New(duration time.Duration) Alarmer {
+func NewAlarmer(ctx context.Context, period time.Duration) Alarmer {
 
-	if duration <= 0 {
+	if period <= 0 {
 		return nil
 	}
 
+	alarms := make(chan struct{})
+	done := make(chan struct{})
+
 	return &alarmer{
-		duration: duration,
-		alarm:    make(chan struct{}),
-		end:      make(chan struct{}),
+		ctx:    ctx,
+		period: period,
+		alarms: alarms,
+		done:   done,
 	}
 }
 
-func (a *alarmer) Init() error {
+func (a *alarmer) Init() {
 	go func() {
-		ticker := time.NewTicker(a.duration)
-		defer ticker.Stop()
-		defer close(a.alarm)
-		defer close(a.end)
-
+		timer := time.After(a.period)
 		for {
 			select {
-			case <-ticker.C:
-				select {
-				case a.alarm <- struct{}{}:
-				default:
-				}
-			case <-a.end:
+			case <-timer:
+				a.alarms <- struct{}{}
+				timer = time.After(a.period)
+			case <-a.ctx.Done():
+				close(a.alarms)
+				a.done <- struct{}{}
 				return
 			}
 		}
 	}()
-
-	return nil
 }
 
 func (a *alarmer) Alarm() <-chan struct{} {
-	return a.alarm
+	return a.alarms
 }
 
 func (a *alarmer) Close() {
-	a.end <- struct{}{}
+	<-a.done
 }

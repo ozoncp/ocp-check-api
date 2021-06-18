@@ -22,6 +22,7 @@ type api struct {
 	repo      repo.CheckRepo
 	producer  producer.Producer
 	prom      prometheus.Prometheus
+	tracer    opentracing.Tracer
 	desc.UnimplementedOcpCheckApiServer
 }
 
@@ -115,13 +116,15 @@ func (a *api) CreateCheck(ctx context.Context,
 		a.prom.IncCreateCheck("success")
 	}
 
+	a.log.Info().Msgf("New check created: id=%v", id)
+
 	return &desc.CreateCheckResponse{CheckId: id}, nil
 }
 
 func (a *api) MultiCreateCheck(ctx context.Context,
 	req *desc.MultiCreateCheckRequest,
 ) (*desc.MultiCreateCheckResponse, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "MultiCreateCheck parent")
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, a.tracer, "MultiCreateCheck parent")
 	defer span.Finish()
 
 	var err error
@@ -147,13 +150,13 @@ func (a *api) MultiCreateCheck(ctx context.Context,
 
 	var totalCreatedChecks = uint64(0)
 	for _, batch := range batches {
-		childSpan, _ := opentracing.StartSpanFromContext(ctx, "MultiCreateCheck batch")
+		childSpan, _ := opentracing.StartSpanFromContextWithTracer(ctx, a.tracer, "MultiCreateCheck batch")
 		childSpan.SetTag("batchSize", fmt.Sprintf("%v", len(batch)))
 		defer childSpan.Finish()
 
 		createdChecks, err := a.repo.MultiCreateCheck(ctx, batch)
 		if err != nil {
-			return nil, status.Error(codes.Unknown, err.Error())
+			return &desc.MultiCreateCheckResponse{Created: totalCreatedChecks}, status.Error(codes.Unknown, err.Error())
 		}
 		totalCreatedChecks += createdChecks
 	}
@@ -216,6 +219,12 @@ func (a *api) RemoveCheck(ctx context.Context,
 	}, nil
 }
 
-func NewOcpCheckApi(batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus) desc.OcpCheckApiServer {
-	return &api{batchSize: batchSize, log: log, repo: repo, producer: producer, prom: prom}
+func NewOcpCheckApi(batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus, tracer opentracing.Tracer) desc.OcpCheckApiServer {
+	return &api{
+		batchSize: batchSize,
+		log:       log,
+		repo:      repo,
+		producer:  producer,
+		prom:      prom,
+		tracer:    tracer}
 }

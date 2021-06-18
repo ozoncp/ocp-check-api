@@ -105,7 +105,7 @@ func runGrpcServer(address string) error {
 		return err
 	}
 
-	desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, repo, producer, prom))
+	desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, repo, producer, prom, opentracing.GlobalTracer()))
 
 	if err := s.Serve(listen); err != nil {
 		log.Fatal().Err(err).Msg("failed to serve")

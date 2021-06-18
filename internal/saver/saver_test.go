@@ -16,26 +16,33 @@ var _ = Describe("Saver", func() {
 	var (
 		err error
 
-		ctrl        *gomock.Controller
-		ctx         context.Context
+		ctrl *gomock.Controller
+		ctx  context.Context
+
 		mockFlusher *mocks.MockCheckFlusher
 		mockAlarmer *mocks.MockAlarmer
 
-		check models.Check
-		s     saver.Saver
+		check  models.Check
+		s      saver.Saver
+		alarms chan struct{}
 	)
 
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
 		ctx = context.Background()
-		mockFlusher = mocks.NewMockCheckFlusher(ctrl)
-		mockAlarmer = mocks.NewMockAlarmer(ctrl)
 
-		s = saver.NewSaver(ctx, 1000, 2, mockAlarmer, mockFlusher)
+		mockAlarmer = mocks.NewMockAlarmer(ctrl)
+		mockFlusher = mocks.NewMockCheckFlusher(ctrl)
+
+		alarms = make(chan struct{})
+		mockAlarmer.EXPECT().Alarm().Return(alarms).AnyTimes()
+
+		s = saver.NewSaver(1000, 2, mockAlarmer, mockFlusher)
 	})
 
 	JustBeforeEach(func() {
-		err = s.Save(check)
+		s.Init(ctx)
+		err = s.Save(ctx, check)
 	})
 
 	AfterEach(func() {
@@ -44,12 +51,17 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("operation canceled", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			mockFlusher.EXPECT().Flush(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			mockFlusher.EXPECT().Flush(gomock.Any(), gomock.Any()).Return(nil)
 		})
 
 		JustBeforeEach(func() {
+			cancelFunc()
 		})
 
 		It("", func() {
@@ -58,12 +70,17 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("alarm is occurring", func() {
-
+		var (
+			cancelFunc context.CancelFunc
+		)
 		BeforeEach(func() {
+			ctx, cancelFunc = context.WithCancel(ctx)
 			mockFlusher.EXPECT().Flush(gomock.Any(), gomock.Any()).Return(nil).MinTimes(1).MaxTimes(2)
 		})
 
 		JustBeforeEach(func() {
+			alarms <- struct{}{}
+			cancelFunc()
 		})
 
 		It("", func() {

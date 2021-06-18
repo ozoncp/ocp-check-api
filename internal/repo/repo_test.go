@@ -37,7 +37,6 @@ var _ = Describe("Repo", func() {
 		db = sqlx.NewDb(mockDb, "sqlmock")
 		ctx = context.Background()
 		log = zerolog.New(os.Stdout)
-		//log.Output(ioutil.Discard)
 		checkRepo = repo.NewCheckRepo(db, &log)
 	})
 
