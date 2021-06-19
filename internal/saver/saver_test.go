@@ -1,6 +1,8 @@
 package saver_test
 
 import (
+	"context"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,23 +17,32 @@ var _ = Describe("Saver", func() {
 		err error
 
 		ctrl *gomock.Controller
+		ctx  context.Context
 
 		mockFlusher *mocks.MockCheckFlusher
+		mockAlarmer *mocks.MockAlarmer
 
-		check models.Check
-		s     saver.Saver
+		check  models.Check
+		s      saver.Saver
+		alarms chan struct{}
 	)
 
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
+		ctx = context.Background()
 
+		mockAlarmer = mocks.NewMockAlarmer(ctrl)
 		mockFlusher = mocks.NewMockCheckFlusher(ctrl)
 
-		s = saver.NewSaver(1000, 2, mockFlusher)
+		alarms = make(chan struct{})
+		mockAlarmer.EXPECT().Alarm().Return(alarms).AnyTimes()
+
+		s = saver.NewSaver(1000, 2, mockAlarmer, mockFlusher)
 	})
 
 	JustBeforeEach(func() {
-		err = s.Save(check)
+		s.Init(ctx)
+		err = s.Save(ctx, check)
 	})
 
 	AfterEach(func() {
@@ -40,12 +51,17 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("operation canceled", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			mockFlusher.EXPECT().Flush(gomock.Any()).Return(nil).Times(1)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			mockFlusher.EXPECT().Flush(gomock.Any(), gomock.Any()).Return(nil)
 		})
 
 		JustBeforeEach(func() {
+			cancelFunc()
 		})
 
 		It("", func() {
@@ -54,12 +70,17 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("alarm is occurring", func() {
-
+		var (
+			cancelFunc context.CancelFunc
+		)
 		BeforeEach(func() {
-			mockFlusher.EXPECT().Flush(gomock.Any()).Return(nil).MinTimes(1).MaxTimes(2)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			mockFlusher.EXPECT().Flush(gomock.Any(), gomock.Any()).Return(nil).MinTimes(1).MaxTimes(2)
 		})
 
 		JustBeforeEach(func() {
+			alarms <- struct{}{}
+			cancelFunc()
 		})
 
 		It("", func() {

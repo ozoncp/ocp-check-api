@@ -2,3 +2,4 @@
 **.exe
 vendor.protogen/
 bin/
+migrate*

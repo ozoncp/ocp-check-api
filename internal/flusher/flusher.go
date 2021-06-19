@@ -1,13 +1,15 @@
 package flusher
 
 import (
+	"context"
+
 	"github.com/ozoncp/ocp-check-api/internal/models"
 	"github.com/ozoncp/ocp-check-api/internal/repo"
 	"github.com/ozoncp/ocp-check-api/internal/utils"
 )
 
 type CheckFlusher interface {
-	Flush(checks []models.Check) []models.Check
+	Flush(ctx context.Context, checks []models.Check) []models.Check
 }
 
 type checkFlusher struct {
@@ -15,14 +17,14 @@ type checkFlusher struct {
 	checkRepo repo.CheckRepo
 }
 
-func (f *checkFlusher) Flush(checks []models.Check) []models.Check {
+func (f *checkFlusher) Flush(ctx context.Context, checks []models.Check) []models.Check {
 	bulks, err := utils.SplitChecksToBulks(checks, uint(f.chunkSize))
 	if err != nil {
 		return checks
 	}
 
 	for i := 0; i < len(bulks); i = i + 1 {
-		if err := f.checkRepo.AddChecks(bulks[i]); err != nil {
+		if _, err := f.checkRepo.MultiCreateCheck(ctx, bulks[i]); err != nil {
 			return checks[i*f.chunkSize:]
 		}
 	}
@@ -35,7 +37,7 @@ func NewCheckFlusher(chunkSize int, checkRepo repo.CheckRepo) CheckFlusher {
 }
 
 type TestFlusher interface {
-	Flush(tests []models.Test) []models.Test
+	Flush(ctx context.Context, tests []models.Test) []models.Test
 }
 
 type testFlusher struct {
@@ -43,14 +45,14 @@ type testFlusher struct {
 	testRepo  repo.TestRepo
 }
 
-func (f *testFlusher) Flush(tests []models.Test) []models.Test {
+func (f *testFlusher) Flush(ctx context.Context, tests []models.Test) []models.Test {
 	bulks, err := utils.SplitTestsToBulks(tests, uint(f.chunkSize))
 	if err != nil {
 		return tests
 	}
 
 	for i := 0; i < len(bulks); i = i + 1 {
-		if err := f.testRepo.AddTests(bulks[i]); err != nil {
+		if _, err := f.testRepo.MultiCreateTest(ctx, bulks[i]); err != nil {
 			return tests[i*f.chunkSize:]
 		}
 	}
