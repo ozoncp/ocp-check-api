@@ -45,6 +45,18 @@ func (mr *MockPrometheusMockRecorder) IncCreateCheck(arg0 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncCreateCheck", reflect.TypeOf((*MockPrometheus)(nil).IncCreateCheck), arg0)
 }
 
+// IncCreateTest mocks base method.
+func (m *MockPrometheus) IncCreateTest(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncCreateTest", arg0)
+}
+
+// IncCreateTest indicates an expected call of IncCreateTest.
+func (mr *MockPrometheusMockRecorder) IncCreateTest(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncCreateTest", reflect.TypeOf((*MockPrometheus)(nil).IncCreateTest), arg0)
+}
+
 // IncDeleteCheck mocks base method.
 func (m *MockPrometheus) IncDeleteCheck(arg0 string) {
 	m.ctrl.T.Helper()
@@ -57,6 +69,18 @@ func (mr *MockPrometheusMockRecorder) IncDeleteCheck(arg0 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncDeleteCheck", reflect.TypeOf((*MockPrometheus)(nil).IncDeleteCheck), arg0)
 }
 
+// IncDeleteTest mocks base method.
+func (m *MockPrometheus) IncDeleteTest(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncDeleteTest", arg0)
+}
+
+// IncDeleteTest indicates an expected call of IncDeleteTest.
+func (mr *MockPrometheusMockRecorder) IncDeleteTest(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncDeleteTest", reflect.TypeOf((*MockPrometheus)(nil).IncDeleteTest), arg0)
+}
+
 // IncUpdateCheck mocks base method.
 func (m *MockPrometheus) IncUpdateCheck(arg0 string) {
 	m.ctrl.T.Helper()
@@ -67,4 +91,16 @@ func (m *MockPrometheus) IncUpdateCheck(arg0 string) {
 func (mr *MockPrometheusMockRecorder) IncUpdateCheck(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncUpdateCheck", reflect.TypeOf((*MockPrometheus)(nil).IncUpdateCheck), arg0)
+}
+
+// IncUpdateTest mocks base method.
+func (m *MockPrometheus) IncUpdateTest(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncUpdateTest", arg0)
+}
+
+// IncUpdateTest indicates an expected call of IncUpdateTest.
+func (mr *MockPrometheusMockRecorder) IncUpdateTest(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncUpdateTest", reflect.TypeOf((*MockPrometheus)(nil).IncUpdateTest), arg0)
 }

@@ -125,7 +125,9 @@ func runGrpcServer(address string) error {
 		case sig := <-signalChannel:
 			fmt.Printf("Close by ctrl+c: %s\n", sig)
 			fmt.Printf("shutting down Prometheus\n")
-			metricServer.Shutdown(ctx)
+			if err = metricServer.Shutdown(ctx); err != nil {
+				log.Error().Err(err).Msgf("error during shutdown")
+			}
 			s.GracefulStop()
 			done()
 		case <-gctx.Done():

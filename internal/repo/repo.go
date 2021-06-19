@@ -166,7 +166,10 @@ func (r *checkRepo) CreateCheck(ctx context.Context, check models.Check) (uint64
 		return 0, err
 	}
 
-	tx.Commit()
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+
 	// Processing of rollback in case of error is not required
 	return id, nil
 }
@@ -348,7 +351,10 @@ func (r *testRepo) CreateTest(ctx context.Context, test models.Test) (uint64, er
 		return 0, err
 	}
 
-	tx.Commit()
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+
 	// Processing of rollback in case of error is not required
 	return id, nil
 }
