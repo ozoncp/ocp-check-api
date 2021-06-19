@@ -158,7 +158,15 @@ func (a *api) MultiCreateCheck(ctx context.Context,
 		if err != nil {
 			return &desc.MultiCreateCheckResponse{Created: totalCreatedChecks}, status.Error(codes.Unknown, err.Error())
 		}
-		totalCreatedChecks += createdChecks
+
+		if len(batch) == len(createdChecks) {
+			for idx, checkId := range createdChecks {
+				batch[idx].ID = checkId
+				_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Created, Event: batch[idx]})
+				a.prom.IncCreateCheck("success")
+			}
+		}
+		totalCreatedChecks += uint64(len(createdChecks))
 	}
 
 	return &desc.MultiCreateCheckResponse{Created: totalCreatedChecks}, nil

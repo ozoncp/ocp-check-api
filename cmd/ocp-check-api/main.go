@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -17,6 +19,7 @@ import (
 	grpczerolog "github.com/philip-bui/grpc-zerolog"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	zerolog "github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -32,7 +35,7 @@ func Greeting(name string) string {
 }
 
 const (
-	grpcAddress       = "0.0.0.0:8083"
+	grpcAddress       = ":8083"
 	prometheusAddress = "0.0.0.0:9100"
 )
 
@@ -73,7 +76,10 @@ func initOpentracing(log zerolog.Logger) {
 
 func runGrpcServer(address string) error {
 	log := zerolog.New(os.Stdout)
-	ctx := context.Background()
+
+	ctx, done := context.WithCancel(context.Background())
+	g, gctx := errgroup.WithContext(ctx)
+
 	db, err := sqlx.Open("pgx", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Panic().Err(err).Msg("Unable to connect to database")
@@ -94,23 +100,54 @@ func runGrpcServer(address string) error {
 		log.Fatal().Err(err).Msg("failed to listen")
 	}
 
-	s := grpc.NewServer(grpczerolog.UnaryInterceptorWithLogger(&log))
-
 	prom := prom.NewPrometheus(log)
 
+	metricServer := &http.Server{Addr: prometheusAddress}
 	http.Handle("/metrics", promhttp.Handler())
-	log.Info().Msgf("listen Prometheus on %s", prometheusAddress)
-	if err = http.ListenAndServe(prometheusAddress, promhttp.Handler()); err != nil {
-		log.Fatal().Err(err).Msgf("failed to listen or serve Prometheus: %v", err)
-		return err
+	s := grpc.NewServer(grpczerolog.UnaryInterceptorWithLogger(&log))
+
+	go func() {
+		log.Info().Msgf("listen Prometheus on %s", prometheusAddress)
+		err = metricServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatal().Err(err).Msgf("failed to listen or serve Prometheus: %v", err)
+		}
+	}()
+
+	g.Go(func() error {
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+
+		select {
+		case sig := <-signalChannel:
+			fmt.Printf("Close by ctrl+c: %s\n", sig)
+			fmt.Printf("shutting down Prometheus\n")
+			metricServer.Shutdown(ctx)
+			s.GracefulStop()
+			done()
+		case <-gctx.Done():
+			return gctx.Err()
+		}
+
+		return nil
+	})
+
+	g.Go(func() error {
+		desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, repo, producer, prom, opentracing.GlobalTracer()))
+
+		if err := s.Serve(listen); err != nil {
+			log.Fatal().Err(err).Msg("failed to serve")
+			return err
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		log.Fatal().Err(err).Msg("ailed to wait goroutine group")
 	}
 
-	desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, repo, producer, prom, opentracing.GlobalTracer()))
-
-	if err := s.Serve(listen); err != nil {
-		log.Fatal().Err(err).Msg("failed to serve")
-		return err
-	}
+	log.Info().Msg("graceful shutdown successfully finished")
 
 	return nil
 }

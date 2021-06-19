@@ -18,7 +18,7 @@ var (
 
 type CheckRepo interface {
 	CreateCheck(ctx context.Context, check models.Check) (uint64, error)
-	MultiCreateCheck(ctx context.Context, checks []models.Check) (uint64, error)
+	MultiCreateCheck(ctx context.Context, checks []models.Check) ([]uint64, error)
 	UpdateCheck(ctx context.Context, check models.Check) (bool, error)
 	RemoveCheck(ctx context.Context, checkId uint64) error
 	DescribeCheck(ctx context.Context, checkId uint64) (*models.Check, error)
@@ -27,7 +27,7 @@ type CheckRepo interface {
 
 type TestRepo interface {
 	CreateTest(ctx context.Context, test models.Test) (uint64, error)
-	MultiCreateTest(ctx context.Context, tests []models.Test) (uint64, error)
+	MultiCreateTest(ctx context.Context, tests []models.Test) ([]uint64, error)
 	UpdateTest(ctx context.Context, test models.Test) (bool, error)
 	RemoveTest(ctx context.Context, testId uint64) error
 	DescribeTest(ctx context.Context, testId uint64) (*models.Test, error)
@@ -133,39 +133,70 @@ func (r *checkRepo) RemoveCheck(ctx context.Context, checkId uint64) error {
 }
 
 func (r *checkRepo) CreateCheck(ctx context.Context, check models.Check) (uint64, error) {
-	query := sq.Insert("checks").
+	query, args, err := sq.StatementBuilder.
+		PlaceholderFormat(sq.Dollar).
+		Insert("checks").
 		Columns("solution_id", "test_id", "runner_id", "success").
-		RunWith(r.db).
-		PlaceholderFormat(sq.Dollar)
+		Values(check.SolutionID, check.TestID, check.RunnerID, check.Success).
+		Suffix("RETURNING id").
+		ToSql()
 
-	query = query.Values(check.SolutionID, check.TestID, check.RunnerID, check.Success)
+	r.log.Debug().Msgf("%v", query)
 
-	result, err := query.ExecContext(ctx)
 	if err != nil {
-		r.log.Error().Err(err).Msg("")
+		return 0, err
 	}
 
-	id, _ := result.LastInsertId()
-	return uint64(id), err
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	var id uint64
+	if err := tx.QueryRowxContext(ctx, query, args[0], args[1], args[2], args[3]).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	tx.Commit()
+	// Processing of rollback in case of error is not required
+	return id, nil
 }
 
-func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check) (uint64, error) {
-	query := sq.Insert("checks").
-		Columns("solution_id", "test_id", "runner_id", "success").
-		RunWith(r.db).
-		PlaceholderFormat(sq.Dollar)
+func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check) ([]uint64, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []uint64
 
 	for _, check := range checks {
-		query = query.Values(check.SolutionID, check.TestID, check.RunnerID, check.Success)
+		query, args, err := sq.StatementBuilder.
+			PlaceholderFormat(sq.Dollar).
+			Insert("checks").
+			Columns("solution_id", "test_id", "runner_id", "success").
+			Values(check.SolutionID, check.TestID, check.RunnerID, check.Success).
+			Suffix("RETURNING id").
+			ToSql()
+
+		if err != nil {
+			return nil, err
+		}
+
+		var id uint64
+		if err := tx.QueryRowxContext(ctx, query, args[0], args[1], args[2], args[3]).Scan(&id); err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, id)
 	}
 
-	result, err := query.ExecContext(ctx)
-	affected, _ := result.RowsAffected()
-	if err != nil {
-		r.log.Error().Err(err).Msg("")
+	if err = tx.Commit(); err != nil {
+		return nil, err
 	}
 
-	return uint64(affected), err
+	// Processing of rollback in case of error is not required
+	return ids, nil
 }
 
 func NewCheckRepo(db *sqlx.DB, log *zerolog.Logger) CheckRepo {

@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
 )
 
@@ -19,7 +20,7 @@ type prometheusApi struct {
 
 func NewPrometheus(log zerolog.Logger) Prometheus {
 	api := &prometheusApi{
-		createCounter: prometheus.NewCounterVec(
+		createCounter: promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "ocp_check_create_counter",
 				Help: "Number of created checks.",
@@ -27,7 +28,7 @@ func NewPrometheus(log zerolog.Logger) Prometheus {
 			[]string{"status"},
 		),
 
-		updateCounter: prometheus.NewCounterVec(
+		updateCounter: promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "ocp_check_update_counter",
 				Help: "Number of updated checks.",
@@ -35,23 +36,13 @@ func NewPrometheus(log zerolog.Logger) Prometheus {
 			[]string{"status"},
 		),
 
-		deleteCounter: prometheus.NewCounterVec(
+		deleteCounter: promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "ocp_check_delete_counter",
 				Help: "Number of deleted checks.",
 			},
 			[]string{"status"},
 		)}
-
-	if err := prometheus.Register(api.createCounter); err != nil {
-		log.Error().Err(err).Msg("")
-	}
-	if err := prometheus.Register(api.updateCounter); err != nil {
-		log.Error().Err(err).Msg("")
-	}
-	if err := prometheus.Register(api.deleteCounter); err != nil {
-		log.Error().Err(err).Msg("")
-	}
 
 	return api
 }
