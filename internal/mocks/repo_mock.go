@@ -81,10 +81,10 @@ func (mr *MockCheckRepoMockRecorder) ListChecks(arg0, arg1, arg2 interface{}) *g
 }
 
 // MultiCreateCheck mocks base method.
-func (m *MockCheckRepo) MultiCreateCheck(arg0 context.Context, arg1 []models.Check) (uint64, error) {
+func (m *MockCheckRepo) MultiCreateCheck(arg0 context.Context, arg1 []models.Check) ([]uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MultiCreateCheck", arg0, arg1)
-	ret0, _ := ret[0].(uint64)
+	ret0, _ := ret[0].([]uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -193,10 +193,10 @@ func (mr *MockTestRepoMockRecorder) ListTests(arg0, arg1, arg2 interface{}) *gom
 }
 
 // MultiCreateTest mocks base method.
-func (m *MockTestRepo) MultiCreateTest(arg0 context.Context, arg1 []models.Test) (uint64, error) {
+func (m *MockTestRepo) MultiCreateTest(arg0 context.Context, arg1 []models.Test) ([]uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MultiCreateTest", arg0, arg1)
-	ret0, _ := ret[0].(uint64)
+	ret0, _ := ret[0].([]uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

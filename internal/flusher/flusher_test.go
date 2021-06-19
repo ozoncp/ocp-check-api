@@ -46,8 +46,8 @@ var _ = Describe("Flusher", func() {
 		BeforeEach(func() {
 			tests = []models.Test{{}, {}, {}}
 			gomock.InOrder(
-				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Any()).Return(uint64(chunkSize), nil),
-				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Any()).Return(uint64(len(tests)-chunkSize), nil),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Any()).Return(make([]uint64, chunkSize), nil),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Any()).Return(make([]uint64, len(tests)-chunkSize), nil),
 			)
 		})
 
@@ -60,7 +60,7 @@ var _ = Describe("Flusher", func() {
 		BeforeEach(func() {
 			tests = []models.Test{{}, {}}
 
-			mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(uint64(0), timeOutError)
+			mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return([]uint64{}, timeOutError)
 		})
 
 		It("", func() {
@@ -74,8 +74,8 @@ var _ = Describe("Flusher", func() {
 			tests = []models.Test{{}, {}, {}, {}, {}}
 
 			gomock.InOrder(
-				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(uint64(chunkSize), nil),
-				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(uint64(0), timeOutError),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return(make([]uint64, chunkSize), nil),
+				mockRepo.EXPECT().MultiCreateTest(ctx, gomock.Len(chunkSize)).Return([]uint64{}, timeOutError),
 			)
 		})
 
