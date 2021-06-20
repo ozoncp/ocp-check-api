@@ -8,7 +8,7 @@ import (
 	"github.com/ozoncp/ocp-check-api/internal/models"
 	"github.com/ozoncp/ocp-check-api/internal/producer"
 	"github.com/ozoncp/ocp-check-api/internal/prometheus"
-	"github.com/ozoncp/ocp-check-api/internal/repo"
+	repo "github.com/ozoncp/ocp-check-api/internal/repo"
 	"github.com/ozoncp/ocp-check-api/internal/utils"
 	desc "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api"
 	"github.com/rs/zerolog"
@@ -26,8 +26,8 @@ type api struct {
 	desc.UnimplementedOcpCheckApiServer
 }
 
-func (a *api) SendEvent(event producer.CheckEvent) error {
-	return a.producer.SendEvent(event)
+func (a *api) SendCheckEvent(event producer.CheckEvent) error {
+	return a.producer.SendCheckEvent(event)
 }
 
 func (a *api) ListChecks(ctx context.Context,
@@ -112,7 +112,7 @@ func (a *api) CreateCheck(ctx context.Context,
 
 	if id != 0 {
 		check.ID = id
-		_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Created, Event: check})
+		_ = a.producer.SendCheckEvent(producer.CheckEvent{Type: producer.Created, Event: check})
 		a.prom.IncCreateCheck("success")
 	}
 
@@ -158,7 +158,15 @@ func (a *api) MultiCreateCheck(ctx context.Context,
 		if err != nil {
 			return &desc.MultiCreateCheckResponse{Created: totalCreatedChecks}, status.Error(codes.Unknown, err.Error())
 		}
-		totalCreatedChecks += createdChecks
+
+		if len(batch) == len(createdChecks) {
+			for idx, checkId := range createdChecks {
+				batch[idx].ID = checkId
+				_ = a.producer.SendCheckEvent(producer.CheckEvent{Type: producer.Created, Event: batch[idx]})
+				a.prom.IncCreateCheck("success")
+			}
+		}
+		totalCreatedChecks += uint64(len(createdChecks))
 	}
 
 	return &desc.MultiCreateCheckResponse{Created: totalCreatedChecks}, nil
@@ -185,7 +193,7 @@ func (a *api) UpdateCheck(ctx context.Context,
 	}
 
 	if updated {
-		_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Updated, Event: updatedCheck})
+		_ = a.producer.SendCheckEvent(producer.CheckEvent{Type: producer.Updated, Event: updatedCheck})
 		a.prom.IncUpdateCheck("success")
 	}
 
@@ -210,7 +218,7 @@ func (a *api) RemoveCheck(ctx context.Context,
 
 	if found {
 		deletedCheck := models.Check{ID: req.CheckId}
-		_ = a.producer.SendEvent(producer.CheckEvent{Type: producer.Deleted, Event: deletedCheck})
+		_ = a.producer.SendCheckEvent(producer.CheckEvent{Type: producer.Deleted, Event: deletedCheck})
 		a.prom.IncDeleteCheck("success")
 	}
 

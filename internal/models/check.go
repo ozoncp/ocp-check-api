@@ -9,7 +9,7 @@ type Check struct {
 	SolutionID uint64 `json:"solutionID,omitempty"`
 	TestID     uint64 `json:"testID,omitempty"`
 	RunnerID   uint64 `json:"runnerID,omitempty"`
-	Success    bool   `json:"success,omitempty"`
+	Success    bool   `json:"success"`
 }
 
 func (c *Check) String() string { return fmt.Sprintf("Check(id=%v)", c.ID) }

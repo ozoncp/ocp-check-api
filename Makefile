@@ -17,6 +17,18 @@ PHONY: .generate
 		mv pkg/ocp-check-api/github.com/ozoncp/ocp-check-api/pkg/ocp-check-api/* pkg/ocp-check-api/
 		rm -rf pkg/ocp-check-api/github.com
 		mkdir -p cmd/ocp-check-api
+		mkdir -p pkg/ocp-test-api
+		protoc -I vendor.protogen \
+				--go_out=pkg/ocp-test-api --go_opt=paths=import \
+				--go-grpc_out=pkg/ocp-test-api --go-grpc_opt=paths=import \
+				--grpc-gateway_out=pkg/ocp-test-api \
+				--grpc-gateway_opt=logtostderr=true \
+				--grpc-gateway_opt=paths=import \
+				--validate_out lang=go:pkg/ocp-test-api \
+				--swagger_out=allow_merge=true,merge_file_name=api:swagger \
+				api/ocp-test-api/ocp-test-api.proto
+		mv pkg/ocp-test-api/github.com/ozoncp/ocp-check-api/pkg/ocp-test-api/* pkg/ocp-test-api/
+		rm -rf pkg/ocp-test-api/github.com
 
 PHONY: .build
 .build:
@@ -47,7 +59,18 @@ PHONY: .vendor-proto
 			mkdir -p vendor.protogen/github.com/envoyproxy &&\
 			git clone https://github.com/envoyproxy/protoc-gen-validate vendor.protogen/github.com/envoyproxy/protoc-gen-validate ;\
 		fi
-
+		mkdir -p vendor.protogen/api/ocp-test-api
+		cp api/ocp-test-api/ocp-test-api.proto vendor.protogen/api/ocp-test-api
+		@if [ ! -d vendor.protogen/google ]; then \
+			git clone https://github.com/googleapis/googleapis vendor.protogen/googleapis &&\
+			mkdir -p  vendor.protogen/google/ &&\
+			mv vendor.protogen/googleapis/google/api vendor.protogen/google &&\
+			rm -rf vendor.protogen/googleapis ;\
+		fi
+		@if [ ! -d vendor.protogen/github.com/envoyproxy ]; then \
+			mkdir -p vendor.protogen/github.com/envoyproxy &&\
+			git clone https://github.com/envoyproxy/protoc-gen-validate vendor.protogen/github.com/envoyproxy/protoc-gen-validate ;\
+		fi
 
 .PHONY: deps
 deps: install-go-deps

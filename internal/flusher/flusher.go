@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ozoncp/ocp-check-api/internal/models"
-	"github.com/ozoncp/ocp-check-api/internal/repo"
+	repo "github.com/ozoncp/ocp-check-api/internal/repo"
 	"github.com/ozoncp/ocp-check-api/internal/utils"
 )
 

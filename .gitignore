@@ -3,3 +3,4 @@
 vendor.protogen/
 bin/
 migrate*
+**.log

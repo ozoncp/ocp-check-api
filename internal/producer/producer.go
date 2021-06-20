@@ -9,18 +9,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var brokers = []string{"127.0.0.1:9092"}
-
 const (
-	topic    = "ocp-check"
-	capacity = 1024
+	checkTopic = "ocp-check"
+	testTopic  = "ocp-test"
+	capacity   = 1024
 )
 
 type Producer interface {
-	SendEvent(event CheckEvent) error
+	SendCheckEvent(event CheckEvent) error
+	SendTestEvent(event TestEvent) error
 }
 
-func NewProducer(ctx context.Context) (Producer, error) {
+func NewProducer(ctx context.Context, brokers []string) (Producer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -29,12 +29,25 @@ func NewProducer(ctx context.Context) (Producer, error) {
 
 	messages := make(chan *sarama.ProducerMessage, capacity)
 
-	p := &checkProducer{producer: producer, messages: messages}
+	p := &kafkaProducer{producer: producer, messages: messages}
 	go handleMessages(ctx, p)
 	return p, err
 }
 
 func (t *CheckEvent) String() string {
+	switch t.Type {
+	case Created:
+		return "created"
+	case Updated:
+		return "updated"
+	case Deleted:
+		return "removed"
+	default:
+		return "unknown"
+	}
+}
+
+func (t *TestEvent) String() string {
 	switch t.Type {
 	case Created:
 		return "created"
@@ -63,12 +76,28 @@ func prepareCheckMessage(topic string, event CheckEvent, timestamp time.Time) *s
 	return msg
 }
 
-type checkProducer struct {
+func prepareTestMessage(topic string, event TestEvent, timestamp time.Time) *sarama.ProducerMessage {
+	b, _ := json.Marshal(event.Event)
+	msg := &sarama.ProducerMessage{
+		Topic:     topic,
+		Key:       sarama.StringEncoder(event.String()),
+		Value:     sarama.ByteEncoder(b),
+		Headers:   []sarama.RecordHeader{},
+		Metadata:  nil,
+		Offset:    0,
+		Partition: -1,
+		Timestamp: timestamp,
+	}
+
+	return msg
+}
+
+type kafkaProducer struct {
 	producer sarama.SyncProducer
 	messages chan *sarama.ProducerMessage
 }
 
-func handleMessages(ctx context.Context, p *checkProducer) {
+func handleMessages(ctx context.Context, p *kafkaProducer) {
 	for {
 		select {
 		case msg := <-p.messages:
@@ -83,7 +112,12 @@ func handleMessages(ctx context.Context, p *checkProducer) {
 	}
 }
 
-func (p *checkProducer) SendEvent(event CheckEvent) error {
-	p.messages <- prepareCheckMessage(topic, event, time.Now())
+func (p *kafkaProducer) SendCheckEvent(event CheckEvent) error {
+	p.messages <- prepareCheckMessage(checkTopic, event, time.Now())
+	return nil
+}
+
+func (p *kafkaProducer) SendTestEvent(event TestEvent) error {
+	p.messages <- prepareTestMessage(testTopic, event, time.Now())
 	return nil
 }

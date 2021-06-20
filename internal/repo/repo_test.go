@@ -2,18 +2,17 @@ package repo_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/ozoncp/ocp-check-api/internal/models"
-	"github.com/ozoncp/ocp-check-api/internal/repo"
+	repo "github.com/ozoncp/ocp-check-api/internal/repo"
 	"github.com/rs/zerolog"
+	sqlmock "github.com/zhashkevych/go-sqlxmock"
 )
 
 var _ = Describe("Repo", func() {
@@ -24,7 +23,6 @@ var _ = Describe("Repo", func() {
 	var (
 		mock      sqlmock.Sqlmock
 		ctx       context.Context
-		mockDb    *sql.DB
 		db        *sqlx.DB
 		id        uint64
 		err       error
@@ -33,15 +31,13 @@ var _ = Describe("Repo", func() {
 	)
 
 	BeforeEach(func() {
-		mockDb, mock, err = sqlmock.New() // mock sql.DB
-		db = sqlx.NewDb(mockDb, "sqlmock")
+		db, mock, err = sqlmock.Newx() // mock sql.DB
 		ctx = context.Background()
 		log = zerolog.New(os.Stdout)
 		checkRepo = repo.NewCheckRepo(db, &log)
 	})
 
 	AfterEach(func() {
-		defer mockDb.Close()
 		defer db.Close()
 		err = mock.ExpectationsWereMet() // make sure all expectations were met
 		Expect(err).ShouldNot(HaveOccurred())
@@ -52,7 +48,10 @@ var _ = Describe("Repo", func() {
 			newId = uint64(100)
 		)
 		BeforeEach(func() {
-			mock.ExpectExec("INSERT INTO checks").WithArgs(3, 4, 5, false).WillReturnResult(sqlmock.NewResult(int64(newId), 1))
+			mock.ExpectBegin()
+			rows := sqlmock.NewRows([]string{"id"}).AddRow(uint64(newId))
+			mock.ExpectQuery("INSERT INTO checks").WithArgs(3, 4, 5, false).WillReturnRows(rows)
+			mock.ExpectCommit()
 			id, err = checkRepo.CreateCheck(ctx, models.Check{SolutionID: 3, TestID: 4, RunnerID: 5, Success: false})
 		})
 
@@ -64,7 +63,12 @@ var _ = Describe("Repo", func() {
 
 	Context("insert multiple checks into database", func() {
 		BeforeEach(func() {
-			mock.ExpectExec("INSERT INTO checks").WithArgs(3, 4, 5, false, 5, 6, 7, true).WillReturnResult(sqlmock.NewResult(1, 2))
+			rows := sqlmock.NewRows([]string{"id"}).AddRow(uint64(1))
+			rows2 := sqlmock.NewRows([]string{"id"}).AddRow(uint64(2))
+			mock.ExpectBegin()
+			mock.ExpectQuery("INSERT INTO checks").WithArgs(3, 4, 5, false).WillReturnRows(rows)
+			mock.ExpectQuery("INSERT INTO checks").WithArgs(5, 6, 7, true).WillReturnRows(rows2)
+			mock.ExpectCommit()
 			_, err = checkRepo.MultiCreateCheck(ctx, []models.Check{
 				{SolutionID: 3, TestID: 4, RunnerID: 5, Success: false},
 				{SolutionID: 5, TestID: 6, RunnerID: 7, Success: true},

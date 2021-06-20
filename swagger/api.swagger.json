@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "api/ocp-check-api/ocp-check-api.proto",
+    "title": "api/ocp-test-api/ocp-test-api.proto",
     "version": "version not set"
   },
   "consumes": [
@@ -11,15 +11,15 @@
     "application/json"
   ],
   "paths": {
-    "/checks": {
+    "/tests": {
       "get": {
-        "summary": "Возвращает список \"проверок\"",
-        "operationId": "OcpCheckApi_ListChecks",
+        "summary": "Возвращает список \"тестов\"",
+        "operationId": "OcpTestApi_ListTests",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiListChecksResponse"
+              "$ref": "#/definitions/apiListTestsResponse"
             }
           },
           "default": {
@@ -46,17 +46,17 @@
           }
         ],
         "tags": [
-          "OcpCheckApi"
+          "OcpTestApi"
         ]
       },
       "post": {
-        "summary": "Обновляет \"проверку\" по идентификатору",
-        "operationId": "OcpCheckApi_UpdateCheck",
+        "summary": "Обновляет \"тест\" по идентификатору",
+        "operationId": "OcpTestApi_UpdateTest",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiUpdateCheckResponse"
+              "$ref": "#/definitions/apiUpdateTestResponse"
             }
           },
           "default": {
@@ -67,19 +67,19 @@
           }
         },
         "tags": [
-          "OcpCheckApi"
+          "OcpTestApi"
         ]
       }
     },
-    "/checks/{check_id}": {
+    "/tests/{test_id}": {
       "get": {
-        "summary": "Возвращает описание \"проверки\" по ее идентификатору",
-        "operationId": "OcpCheckApi_DescribeCheck",
+        "summary": "Возвращает описание \"теста\" по ее идентификатору",
+        "operationId": "OcpTestApi_DescribeTest",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiDescribeCheckResponse"
+              "$ref": "#/definitions/apiDescribeTestResponse"
             }
           },
           "default": {
@@ -91,7 +91,7 @@
         },
         "parameters": [
           {
-            "name": "check_id",
+            "name": "test_id",
             "in": "path",
             "required": true,
             "type": "string",
@@ -99,17 +99,17 @@
           }
         ],
         "tags": [
-          "OcpCheckApi"
+          "OcpTestApi"
         ]
       },
       "delete": {
-        "summary": "Удаляет \"проверку\" по идентификатору",
-        "operationId": "OcpCheckApi_RemoveCheck",
+        "summary": "Удаляет \"тест\" по идентификатору",
+        "operationId": "OcpTestApi_RemoveTest",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiRemoveCheckResponse"
+              "$ref": "#/definitions/apiRemoveTestResponse"
             }
           },
           "default": {
@@ -121,7 +121,7 @@
         },
         "parameters": [
           {
-            "name": "check_id",
+            "name": "test_id",
             "in": "path",
             "required": true,
             "type": "string",
@@ -129,86 +129,56 @@
           }
         ],
         "tags": [
-          "OcpCheckApi"
+          "OcpTestApi"
         ]
       }
     }
   },
   "definitions": {
-    "apiCheck": {
+    "apiCreateTestRequest": {
       "type": "object",
       "properties": {
-        "id": {
+        "taskID": {
           "type": "string",
           "format": "uint64"
         },
-        "solutionID": {
-          "type": "string",
-          "format": "uint64"
+        "input": {
+          "type": "string"
         },
-        "testID": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "runnerID": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "title": "Описание структуры \"проверка\""
-    },
-    "apiCreateCheckRequest": {
-      "type": "object",
-      "properties": {
-        "solutionID": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "testID": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "runnerID": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "success": {
-          "type": "boolean"
+        "output": {
+          "type": "string"
         }
       }
     },
-    "apiCreateCheckResponse": {
+    "apiCreateTestResponse": {
       "type": "object",
       "properties": {
-        "check_id": {
+        "test_id": {
           "type": "string",
           "format": "uint64"
         }
       }
     },
-    "apiDescribeCheckResponse": {
+    "apiDescribeTestResponse": {
       "type": "object",
       "properties": {
-        "check": {
-          "$ref": "#/definitions/apiCheck"
+        "test": {
+          "$ref": "#/definitions/apiTest"
         }
       }
     },
-    "apiListChecksResponse": {
+    "apiListTestsResponse": {
       "type": "object",
       "properties": {
-        "checks": {
+        "tests": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/apiCheck"
+            "$ref": "#/definitions/apiTest"
           }
         }
       }
     },
-    "apiMultiCreateCheckResponse": {
+    "apiMultiCreateTestResponse": {
       "type": "object",
       "properties": {
         "created": {
@@ -217,7 +187,7 @@
         }
       }
     },
-    "apiRemoveCheckResponse": {
+    "apiRemoveTestResponse": {
       "type": "object",
       "properties": {
         "deleted": {
@@ -225,7 +195,27 @@
         }
       }
     },
-    "apiUpdateCheckResponse": {
+    "apiTest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "taskID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "input": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        }
+      },
+      "title": "Описание структуры \"тест\""
+    },
+    "apiUpdateTestResponse": {
       "type": "object",
       "properties": {
         "updated": {

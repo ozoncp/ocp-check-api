@@ -34,16 +34,30 @@ func (m *MockProducer) EXPECT() *MockProducerMockRecorder {
 	return m.recorder
 }
 
-// SendEvent mocks base method.
-func (m *MockProducer) SendEvent(arg0 producer.CheckEvent) error {
+// SendCheckEvent mocks base method.
+func (m *MockProducer) SendCheckEvent(arg0 producer.CheckEvent) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendEvent", arg0)
+	ret := m.ctrl.Call(m, "SendCheckEvent", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SendEvent indicates an expected call of SendEvent.
-func (mr *MockProducerMockRecorder) SendEvent(arg0 interface{}) *gomock.Call {
+// SendCheckEvent indicates an expected call of SendCheckEvent.
+func (mr *MockProducerMockRecorder) SendCheckEvent(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendEvent", reflect.TypeOf((*MockProducer)(nil).SendEvent), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCheckEvent", reflect.TypeOf((*MockProducer)(nil).SendCheckEvent), arg0)
+}
+
+// SendTestEvent mocks base method.
+func (m *MockProducer) SendTestEvent(arg0 producer.TestEvent) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendTestEvent", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendTestEvent indicates an expected call of SendTestEvent.
+func (mr *MockProducerMockRecorder) SendTestEvent(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTestEvent", reflect.TypeOf((*MockProducer)(nil).SendTestEvent), arg0)
 }

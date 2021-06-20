@@ -14,9 +14,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ozoncp/ocp-check-api/internal/api"
+	api "github.com/ozoncp/ocp-check-api/internal/api/ocp-check-api"
 	"github.com/ozoncp/ocp-check-api/internal/mocks"
-	"github.com/ozoncp/ocp-check-api/internal/repo"
+	repo "github.com/ozoncp/ocp-check-api/internal/repo"
 	desc "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api"
 )
 
@@ -83,7 +83,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(1)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
 			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(1)
 			mockRepo.EXPECT().CreateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(newId, nil)
 			createResp, err = grpcApi.CreateCheck(ctx, createReq)
@@ -106,7 +106,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(0)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(0)
 			mockRepo.EXPECT().CreateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(uint64(0), someError)
 			createResp, err = grpcApi.CreateCheck(ctx, createReq)
@@ -124,32 +124,32 @@ var _ = Describe("Api", func() {
 	Context("multicreate check: success", func() {
 		var (
 			multiCreateResp *desc.MultiCreateCheckResponse
-			created         uint64
+			created         []uint64
 		)
 
 		BeforeEach(func() {
-			created = uint64(len(multiCreateReq.Checks))
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(1)
-			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(1)
+			created = make([]uint64, len(multiCreateReq.Checks))
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(len(multiCreateReq.Checks))
+			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(len(multiCreateReq.Checks))
 			mockRepo.EXPECT().MultiCreateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(created, nil)
 			multiCreateResp, err = grpcApi.MultiCreateCheck(ctx, multiCreateReq)
 		})
 
 		It("", func() {
 			Expect(err).Should(BeNil())
-			Expect(multiCreateResp.Created).Should(Equal(created))
+			Expect(multiCreateResp.Created).Should(Equal(uint64(len(created))))
 		})
 	})
 
 	Context("multicreate check: failure", func() {
 		var (
 			multiCreateResp *desc.MultiCreateCheckResponse
-			created         uint64
+			created         []uint64
 		)
 
 		BeforeEach(func() {
-			created = uint64(0)
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(1)
+			created = []uint64{}
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
 			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(1)
 			mockRepo.EXPECT().MultiCreateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(created, someError)
 			multiCreateResp, err = grpcApi.MultiCreateCheck(ctx, multiCreateReq)
@@ -158,7 +158,7 @@ var _ = Describe("Api", func() {
 		It("", func() {
 			Expect(err).ShouldNot(BeNil())
 			Expect(multiCreateResp).ShouldNot(BeNil())
-			Expect(multiCreateResp.Created).Should(Equal(created))
+			Expect(multiCreateResp.Created).Should(Equal(uint64(len(created))))
 			Expect(err).Should(Equal(status.Error(codes.Unknown, someError.Error())))
 		})
 	})
@@ -172,11 +172,11 @@ var _ = Describe("Api", func() {
 		BeforeEach(func() {
 			grpcApi = api.NewOcpCheckApi(batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
 
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(1)
-			mockPrometheus.EXPECT().IncUpdateCheck(gomock.Any()).Times(1)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
+			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(1)
 			gomock.InOrder(
-				mockRepo.EXPECT().MultiCreateCheck(gomock.Any(), gomock.Any()).Return(uint64(batchSize), nil),
-				mockRepo.EXPECT().MultiCreateCheck(gomock.Any(), gomock.Any()).Return(uint64(0), someError),
+				mockRepo.EXPECT().MultiCreateCheck(gomock.Any(), gomock.Any()).Return([]uint64{uint64(batchSize)}, nil),
+				mockRepo.EXPECT().MultiCreateCheck(gomock.Any(), gomock.Any()).Return([]uint64{}, someError),
 			)
 			multiCreateResp, err = grpcApi.MultiCreateCheck(ctx, multiCreateReq)
 		})
@@ -195,7 +195,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(1)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
 			mockPrometheus.EXPECT().IncUpdateCheck(gomock.Any()).Times(1)
 			mockRepo.EXPECT().UpdateCheck(gomock.Any(), gomock.Any()).Return(true, nil)
 			updateResp, err = grpcApi.UpdateCheck(ctx, updateReq)
@@ -214,7 +214,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(0)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncUpdateCheck(gomock.Any()).Times(0)
 			mockRepo.EXPECT().UpdateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(false, repo.CheckNotFound)
 			updateResp, err = grpcApi.UpdateCheck(ctx, updateReq)
@@ -235,7 +235,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(0)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncUpdateCheck(gomock.Any()).Times(0)
 			mockRepo.EXPECT().UpdateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(false, someError)
 			updateResp, err = grpcApi.UpdateCheck(ctx, updateReq)
@@ -256,7 +256,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(1)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
 			mockPrometheus.EXPECT().IncDeleteCheck(gomock.Any()).Times(1)
 			mockRepo.EXPECT().RemoveCheck(gomock.Any(), gomock.Any()).Return(nil)
 			removeResp, err = grpcApi.RemoveCheck(ctx, removeReq)
@@ -275,7 +275,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(0)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncDeleteCheck(gomock.Any()).Times(0)
 			mockRepo.EXPECT().RemoveCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(repo.CheckNotFound)
 			removeResp, err = grpcApi.RemoveCheck(ctx, removeReq)
@@ -296,7 +296,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			mockProducer.EXPECT().SendEvent(gomock.Any()).Times(0)
+			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncDeleteCheck(gomock.Any()).Times(0)
 			mockRepo.EXPECT().RemoveCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(someError)
 			removeResp, err = grpcApi.RemoveCheck(ctx, removeReq)

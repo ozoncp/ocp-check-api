@@ -1,0 +1,14 @@
+database:
+  url: postgres://postgres:postgres@localhost:5432/postgres
+grpc:
+  address: 0.0.0.0:8083
+kafka:
+  brokers: 127.0.0.1:9092
+prometheus:
+  address: 0.0.0.0:9100
+log:
+  console:
+    enable: true
+  file:
+    enable: true
+    path: ./ocp-check-api.log

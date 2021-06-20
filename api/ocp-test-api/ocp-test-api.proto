@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+package ocp.test.api;
+
+option go_package = "github.com/ozoncp/ocp-check-api/pkg/ocp-test-api;ocp_test_api";
+
+// Описание "теста"
+
+service OcpTestApi {
+
+    // Возвращает список "тестов"
+    rpc ListTests(ListTestsRequest) returns (ListTestsResponse) {
+        option (google.api.http) = {
+            get: "/tests"
+        };
+    }
+
+    // Возвращает описание "теста" по ее идентификатору
+    rpc DescribeTest(DescribeTestRequest) returns (DescribeTestResponse) {
+        option (google.api.http) = {
+            get: "/tests/{test_id}"
+        };
+    }
+
+    // Создает новый "тест"
+    rpc CreateTest(CreateTestRequest) returns (CreateTestResponse) {
+        option (google.api.http) = {
+            post: "/tests"
+        };
+    }
+
+    // Создает несколько "тестов"
+    rpc MultiCreateTest(MultiCreateTestRequest) returns (MultiCreateTestResponse) {
+        option (google.api.http) = {
+            post: "/tests"
+        };
+    }
+
+    // Обновляет "тест" по идентификатору
+    rpc UpdateTest(UpdateTestRequest) returns (UpdateTestResponse) {
+        option (google.api.http) = {
+            post: "/tests"
+        };
+    }
+
+    // Удаляет "тест" по идентификатору
+    rpc RemoveTest(RemoveTestRequest) returns (RemoveTestResponse) {
+        option (google.api.http) = {
+            delete: "/tests/{test_id}"
+        };
+    }
+}
+
+message ListTestsRequest {
+    uint64 limit = 1;
+    uint64 offset = 2;
+}
+
+message ListTestsResponse {
+    repeated Test tests = 1;
+}
+
+message DescribeTestRequest {
+    uint64 test_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeTestResponse {
+    Test test = 1;
+}
+
+message CreateTestRequest {
+    uint64 taskID = 1;
+    string input = 2;
+    string output = 3;
+}
+
+message CreateTestResponse {
+    uint64 test_id = 1;
+}
+
+message MultiCreateTestRequest {
+    repeated CreateTestRequest tests = 1;
+}
+
+message MultiCreateTestResponse {
+    uint64 created = 1;
+}
+
+message UpdateTestRequest {
+    Test test = 1;
+}
+
+message UpdateTestResponse {
+    bool updated = 1;
+}
+
+message RemoveTestRequest {
+    uint64 test_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message RemoveTestResponse {
+    bool deleted = 1;
+}
+
+// Описание структуры "тест"
+message Test {
+    uint64 id = 1;
+    uint64 taskID = 2;
+    string input = 3;
+    string output = 4;
+}
+

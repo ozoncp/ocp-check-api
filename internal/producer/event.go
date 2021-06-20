@@ -14,3 +14,8 @@ type CheckEvent struct {
 	Type  EventType
 	Event models.Check
 }
+
+type TestEvent struct {
+	Type  EventType
+	Event models.Test
+}
