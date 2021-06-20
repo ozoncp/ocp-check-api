@@ -32,7 +32,8 @@ PHONY: .generate
 
 PHONY: .build
 .build:
-		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-check-api cmd/ocp-check-api/main.go
+		GIT_COMMIT=$(git rev-list -1 HEAD) CGO_ENABLED=0 GOOS=linux go build -ldflags \
+		"-X main.GitCommit=$(GIT_COMMIT) -X main.BuildDateTime=`date -u +%d.%m.%Y_%H:%M:%S`" -o bin/ocp-check-api cmd/ocp-check-api/main.go
 
 PHONY: install
 install: build .install

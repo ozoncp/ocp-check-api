@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OcpCheckApiClient interface {
+	ApiVersion(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ApiVersionResponse, error)
 	// Возвращает список "проверок"
 	ListChecks(ctx context.Context, in *ListChecksRequest, opts ...grpc.CallOption) (*ListChecksResponse, error)
 	// Возвращает описание "проверки" по ее идентификатору
@@ -38,6 +39,15 @@ type ocpCheckApiClient struct {
 
 func NewOcpCheckApiClient(cc grpc.ClientConnInterface) OcpCheckApiClient {
 	return &ocpCheckApiClient{cc}
+}
+
+func (c *ocpCheckApiClient) ApiVersion(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ApiVersionResponse, error) {
+	out := new(ApiVersionResponse)
+	err := c.cc.Invoke(ctx, "/ocp.check.api.OcpCheckApi/ApiVersion", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *ocpCheckApiClient) ListChecks(ctx context.Context, in *ListChecksRequest, opts ...grpc.CallOption) (*ListChecksResponse, error) {
@@ -98,6 +108,7 @@ func (c *ocpCheckApiClient) RemoveCheck(ctx context.Context, in *RemoveCheckRequ
 // All implementations must embed UnimplementedOcpCheckApiServer
 // for forward compatibility
 type OcpCheckApiServer interface {
+	ApiVersion(context.Context, *Empty) (*ApiVersionResponse, error)
 	// Возвращает список "проверок"
 	ListChecks(context.Context, *ListChecksRequest) (*ListChecksResponse, error)
 	// Возвращает описание "проверки" по ее идентификатору
@@ -117,6 +128,9 @@ type OcpCheckApiServer interface {
 type UnimplementedOcpCheckApiServer struct {
 }
 
+func (UnimplementedOcpCheckApiServer) ApiVersion(context.Context, *Empty) (*ApiVersionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApiVersion not implemented")
+}
 func (UnimplementedOcpCheckApiServer) ListChecks(context.Context, *ListChecksRequest) (*ListChecksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListChecks not implemented")
 }
@@ -146,6 +160,24 @@ type UnsafeOcpCheckApiServer interface {
 
 func RegisterOcpCheckApiServer(s grpc.ServiceRegistrar, srv OcpCheckApiServer) {
 	s.RegisterService(&OcpCheckApi_ServiceDesc, srv)
+}
+
+func _OcpCheckApi_ApiVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpCheckApiServer).ApiVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.check.api.OcpCheckApi/ApiVersion",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpCheckApiServer).ApiVersion(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _OcpCheckApi_ListChecks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -263,6 +295,10 @@ var OcpCheckApi_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ocp.check.api.OcpCheckApi",
 	HandlerType: (*OcpCheckApiServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ApiVersion",
+			Handler:    _OcpCheckApi_ApiVersion_Handler,
+		},
 		{
 			MethodName: "ListChecks",
 			Handler:    _OcpCheckApi_ListChecks_Handler,

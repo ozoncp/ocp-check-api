@@ -70,7 +70,7 @@ var _ = Describe("Api", func() {
 
 		someError = errors.New("some error")
 
-		grpcApi = api.NewOcpCheckApi(batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
+		grpcApi = api.NewOcpCheckApi(api.BuildInfo{}, batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
 	})
 
 	Context("create check: success", func() {
@@ -170,7 +170,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			grpcApi = api.NewOcpCheckApi(batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
+			grpcApi = api.NewOcpCheckApi(api.BuildInfo{}, batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
 
 			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
 			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(1)
