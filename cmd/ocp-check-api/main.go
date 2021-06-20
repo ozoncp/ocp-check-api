@@ -16,7 +16,7 @@ import (
 	"github.com/ozoncp/ocp-check-api/internal/producer"
 	prom "github.com/ozoncp/ocp-check-api/internal/prometheus"
 	repo "github.com/ozoncp/ocp-check-api/internal/repo"
-	desc "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api"
+	descc "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api"
 	desct "github.com/ozoncp/ocp-check-api/pkg/ocp-test-api"
 	grpczerolog "github.com/philip-bui/grpc-zerolog"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,6 +39,10 @@ func Greeting(name string) string {
 const (
 	grpcAddress       = ":8083"
 	prometheusAddress = "0.0.0.0:9100"
+)
+
+var (
+	brokers = []string{"127.0.0.1:9092"}
 )
 
 func initOpentracing(log zerolog.Logger) {
@@ -90,10 +94,10 @@ func runGrpcServer(address string) error {
 
 	initOpentracing(log)
 
-	repoC := repo.NewCheckRepo(db, &log, false)
-	repoT := repo.NewTestRepo(db, &log, false)
+	checkRepo := repo.NewCheckRepo(db, &log)
+	testRepo := repo.NewTestRepo(db, &log)
 
-	producer, err := producer.NewProducer(ctx)
+	producer, err := producer.NewProducer(ctx, brokers)
 	if err != nil {
 		log.Error().Msgf("failed to create kafka provider: %v", err)
 	}
@@ -138,8 +142,8 @@ func runGrpcServer(address string) error {
 	})
 
 	g.Go(func() error {
-		desc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, repoC, producer, prom, opentracing.GlobalTracer()))
-		desct.RegisterOcpTestApiServer(s, apit.NewOcpTestApi(100, log, repoT, producer, prom, opentracing.GlobalTracer()))
+		descc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, checkRepo, producer, prom, opentracing.GlobalTracer()))
+		desct.RegisterOcpTestApiServer(s, apit.NewOcpTestApi(100, log, testRepo, producer, prom, opentracing.GlobalTracer()))
 
 		if err := s.Serve(listen); err != nil {
 			log.Fatal().Err(err).Msg("failed to serve")

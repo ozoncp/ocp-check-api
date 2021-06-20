@@ -9,8 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var brokers = []string{"127.0.0.1:9092"}
-
 const (
 	checkTopic = "ocp-check"
 	testTopic  = "ocp-test"
@@ -22,7 +20,7 @@ type Producer interface {
 	SendTestEvent(event TestEvent) error
 }
 
-func NewProducer(ctx context.Context) (Producer, error) {
+func NewProducer(ctx context.Context, brokers []string) (Producer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
 	config.Producer.RequiredAcks = sarama.WaitForAll

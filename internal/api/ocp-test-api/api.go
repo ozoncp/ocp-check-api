@@ -37,21 +37,21 @@ func (a *api) ListTests(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var Tests []models.Test
+	var tests []models.Test
 	var err error
 
-	Tests, err = a.repo.ListTests(ctx, req.Limit, req.Offset)
+	tests, err = a.repo.ListTests(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
 	var pbTests []*desc.Test
-	for _, Test := range Tests {
+	for _, test := range tests {
 		pbTests = append(pbTests, &desc.Test{
-			Id:     Test.ID,
-			TaskID: Test.TaskID,
-			Input:  Test.Input,
-			Output: Test.Output,
+			Id:     test.ID,
+			TaskID: test.TaskID,
+			Input:  test.Input,
+			Output: test.Output,
 		})
 	}
 	return &desc.ListTestsResponse{Tests: pbTests}, err
@@ -65,10 +65,10 @@ func (a *api) DescribeTest(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var Test *models.Test
+	var test *models.Test
 	var err error
 
-	Test, err = a.repo.DescribeTest(ctx, req.TestId)
+	test, err = a.repo.DescribeTest(ctx, req.TestId)
 	if err != nil {
 		switch {
 		case err == repo.TestNotFound:
@@ -79,10 +79,10 @@ func (a *api) DescribeTest(
 	}
 
 	pbTest := &desc.Test{
-		Id:     Test.ID,
-		TaskID: Test.TaskID,
-		Input:  Test.Input,
-		Output: Test.Output,
+		Id:     test.ID,
+		TaskID: test.TaskID,
+		Input:  test.Input,
+		Output: test.Output,
 	}
 
 	return &desc.DescribeTestResponse{Test: pbTest}, nil
@@ -96,20 +96,20 @@ func (a *api) CreateTest(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	Test := models.Test{
+	test := models.Test{
 		TaskID: req.TaskID,
 		Input:  req.Input,
 		Output: req.Output,
 	}
 
 	var id uint64
-	if id, err = a.repo.CreateTest(ctx, Test); err != nil {
+	if id, err = a.repo.CreateTest(ctx, test); err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
 	if id != 0 {
-		Test.ID = id
-		_ = a.producer.SendTestEvent(producer.TestEvent{Type: producer.Created, Event: Test})
+		test.ID = id
+		_ = a.producer.SendTestEvent(producer.TestEvent{Type: producer.Created, Event: test})
 		a.prom.IncCreateTest("success")
 	}
 
@@ -129,17 +129,17 @@ func (a *api) MultiCreateTest(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	Tests := make([]models.Test, 0, len(req.Tests))
-	for _, Test := range req.Tests {
+	tests := make([]models.Test, 0, len(req.Tests))
+	for _, test := range req.Tests {
 		newTest := models.Test{
-			TaskID: Test.TaskID,
-			Input:  Test.Input,
-			Output: Test.Output,
+			TaskID: test.TaskID,
+			Input:  test.Input,
+			Output: test.Output,
 		}
-		Tests = append(Tests, newTest)
+		tests = append(tests, newTest)
 	}
 
-	batches, err := utils.SplitTestsToBulks(Tests, a.batchSize)
+	batches, err := utils.SplitTestsToBulks(tests, a.batchSize)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}

@@ -36,9 +36,8 @@ type TestRepo interface {
 }
 
 type checkRepo struct {
-	db       *sqlx.DB
-	log      *zerolog.Logger
-	forTests bool
+	db  *sqlx.DB
+	log *zerolog.Logger
 }
 
 func (r *checkRepo) ListChecks(ctx context.Context, limit, offset uint64) ([]models.Check, error) {
@@ -143,10 +142,9 @@ func (r *checkRepo) CreateCheck(ctx context.Context, check models.Check) (uint64
 		PlaceholderFormat(sq.Dollar).
 		Insert("checks").
 		Columns("solution_id", "test_id", "runner_id", "success").
-		Values(check.SolutionID, check.TestID, check.RunnerID, check.Success)
-	if !r.forTests {
-		sb = sb.Suffix("RETURNING id")
-	}
+		Values(check.SolutionID, check.TestID, check.RunnerID, check.Success).
+		Suffix("RETURNING id")
+
 	query, args, err := sb.ToSql()
 
 	r.log.Debug().Msgf("%v", query)
@@ -186,10 +184,8 @@ func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check)
 		sb := sq.StatementBuilder.
 			PlaceholderFormat(sq.Dollar).
 			Insert("checks").
-			Columns("solution_id", "test_id", "runner_id", "success")
-		if !r.forTests {
-			sb = sb.Suffix("RETURNING id")
-		}
+			Columns("solution_id", "test_id", "runner_id", "success").
+			Suffix("RETURNING id")
 
 		query, args, err := sb.
 			Values(check.SolutionID, check.TestID, check.RunnerID, check.Success).
@@ -215,16 +211,15 @@ func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check)
 	return ids, nil
 }
 
-func NewCheckRepo(db *sqlx.DB, log *zerolog.Logger, forTests bool) CheckRepo {
-	return &checkRepo{db: db, log: log, forTests: forTests}
+func NewCheckRepo(db *sqlx.DB, log *zerolog.Logger) CheckRepo {
+	return &checkRepo{db: db, log: log}
 }
 
 // Test REPO
 
 type testRepo struct {
-	db       *sqlx.DB
-	log      *zerolog.Logger
-	forTests bool
+	db  *sqlx.DB
+	log *zerolog.Logger
 }
 
 func (r *testRepo) ListTests(ctx context.Context, limit, offset uint64) ([]models.Test, error) {
@@ -328,10 +323,9 @@ func (r *testRepo) CreateTest(ctx context.Context, test models.Test) (uint64, er
 		PlaceholderFormat(sq.Dollar).
 		Insert("tests").
 		Columns("task_id", "input", "output").
-		Values(test.TaskID, test.Input, test.Output)
-	if !r.forTests {
-		sb = sb.Suffix("RETURNING id")
-	}
+		Values(test.TaskID, test.Input, test.Output).
+		Suffix("RETURNING id")
+
 	query, args, err := sb.ToSql()
 
 	r.log.Debug().Msgf("%v", query)
@@ -371,10 +365,8 @@ func (r *testRepo) MultiCreateTest(ctx context.Context, tests []models.Test) ([]
 		sb := sq.StatementBuilder.
 			PlaceholderFormat(sq.Dollar).
 			Insert("tests").
-			Columns("task_id", "input", "output")
-		if !r.forTests {
-			sb = sb.Suffix("RETURNING id")
-		}
+			Columns("task_id", "input", "output").
+			Suffix("RETURNING id")
 
 		query, args, err := sb.
 			Values(test.TaskID, test.Input, test.Output).
@@ -400,6 +392,6 @@ func (r *testRepo) MultiCreateTest(ctx context.Context, tests []models.Test) ([]
 	return ids, nil
 }
 
-func NewTestRepo(db *sqlx.DB, log *zerolog.Logger, forTests bool) TestRepo {
-	return &testRepo{db: db, log: log, forTests: forTests}
+func NewTestRepo(db *sqlx.DB, log *zerolog.Logger) TestRepo {
+	return &testRepo{db: db, log: log}
 }

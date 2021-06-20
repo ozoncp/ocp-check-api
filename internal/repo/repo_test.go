@@ -34,7 +34,7 @@ var _ = Describe("Repo", func() {
 		db, mock, err = sqlmock.Newx() // mock sql.DB
 		ctx = context.Background()
 		log = zerolog.New(os.Stdout)
-		checkRepo = repo.NewCheckRepo(db, &log, true)
+		checkRepo = repo.NewCheckRepo(db, &log)
 	})
 
 	AfterEach(func() {
