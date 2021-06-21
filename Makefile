@@ -12,7 +12,7 @@ PHONY: .generate
 				--grpc-gateway_opt=logtostderr=true \
 				--grpc-gateway_opt=paths=import \
 				--validate_out lang=go:pkg/ocp-check-api \
-				--swagger_out=allow_merge=true,merge_file_name=api:swagger \
+				--swagger_out=allow_merge=true,merge_file_name=check:swagger \
 				api/ocp-check-api/ocp-check-api.proto
 		mv pkg/ocp-check-api/github.com/ozoncp/ocp-check-api/pkg/ocp-check-api/* pkg/ocp-check-api/
 		rm -rf pkg/ocp-check-api/github.com
@@ -25,7 +25,7 @@ PHONY: .generate
 				--grpc-gateway_opt=logtostderr=true \
 				--grpc-gateway_opt=paths=import \
 				--validate_out lang=go:pkg/ocp-test-api \
-				--swagger_out=allow_merge=true,merge_file_name=api:swagger \
+				--swagger_out=allow_merge=true,merge_file_name=test:swagger \
 				api/ocp-test-api/ocp-test-api.proto
 		mv pkg/ocp-test-api/github.com/ozoncp/ocp-check-api/pkg/ocp-test-api/* pkg/ocp-test-api/
 		rm -rf pkg/ocp-test-api/github.com

@@ -1,3 +1,6 @@
+// Package prometheus defines Prometheus interface and implements prometheusApi type which
+// gathers Create/Update/Delete counters for models.Check and models.Type
+//
 package prometheus
 
 import (
@@ -24,6 +27,7 @@ type prometheusApi struct {
 	deleteCounterT *prometheus.CounterVec
 }
 
+// NewPrometheus creates prometheusApi's instance with six counters (CUD for check and test types)
 func NewPrometheus(log zerolog.Logger) Prometheus {
 	api := &prometheusApi{
 		createCounter: promauto.NewCounterVec(
@@ -77,26 +81,32 @@ func NewPrometheus(log zerolog.Logger) Prometheus {
 	return api
 }
 
+// IncCreateCheck increments counter of created checks
 func (p *prometheusApi) IncCreateCheck(status string) {
 	p.createCounter.WithLabelValues(status).Inc()
 }
 
+// IncUpdateCheck increments counter of updated checks
 func (p *prometheusApi) IncUpdateCheck(status string) {
 	p.updateCounter.WithLabelValues(status).Inc()
 }
 
+// IncDeleteCheck increments counter of deleted checks
 func (p *prometheusApi) IncDeleteCheck(status string) {
 	p.deleteCounter.WithLabelValues(status).Inc()
 }
 
+// IncCreateTest increments counter of created tests
 func (p *prometheusApi) IncCreateTest(status string) {
 	p.createCounterT.WithLabelValues(status).Inc()
 }
 
+// IncUpdateTest increments counter of updated tests
 func (p *prometheusApi) IncUpdateTest(status string) {
 	p.updateCounterT.WithLabelValues(status).Inc()
 }
 
+// IncDeleteTest increments counter of deleted tests
 func (p *prometheusApi) IncDeleteTest(status string) {
 	p.deleteCounterT.WithLabelValues(status).Inc()
 }

@@ -1,3 +1,7 @@
+// Package producer defines Producer interface and implements kafkaProducer type which
+// send Create/Update/Delete events for models.Check and models.Type into Kafka instance
+// and corresponding topics "ocp-check" and "ocp-test"
+//
 package producer
 
 import (
@@ -20,6 +24,7 @@ type Producer interface {
 	SendTestEvent(event TestEvent) error
 }
 
+// NewProducer creates instance of kafkaProducer
 func NewProducer(ctx context.Context, brokers []string) (Producer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
@@ -34,6 +39,7 @@ func NewProducer(ctx context.Context, brokers []string) (Producer, error) {
 	return p, err
 }
 
+// String represents type of event as string
 func (t *CheckEvent) String() string {
 	switch t.Type {
 	case Created:
@@ -47,6 +53,7 @@ func (t *CheckEvent) String() string {
 	}
 }
 
+// String represents type of event as string
 func (t *TestEvent) String() string {
 	switch t.Type {
 	case Created:
@@ -60,6 +67,7 @@ func (t *TestEvent) String() string {
 	}
 }
 
+// prepareCheckMessage serializes CheckEvent into sarama.ProducerMessage pointer.
 func prepareCheckMessage(topic string, event CheckEvent, timestamp time.Time) *sarama.ProducerMessage {
 	b, _ := json.Marshal(event.Event)
 	msg := &sarama.ProducerMessage{
@@ -76,6 +84,7 @@ func prepareCheckMessage(topic string, event CheckEvent, timestamp time.Time) *s
 	return msg
 }
 
+// prepareTestMessage serializes TestEvent into sarama.ProducerMessage pointer.
 func prepareTestMessage(topic string, event TestEvent, timestamp time.Time) *sarama.ProducerMessage {
 	b, _ := json.Marshal(event.Event)
 	msg := &sarama.ProducerMessage{
@@ -112,11 +121,13 @@ func handleMessages(ctx context.Context, p *kafkaProducer) {
 	}
 }
 
+// SendCheckEvent passes CheckEvent into messages channel for sending to Kafka
 func (p *kafkaProducer) SendCheckEvent(event CheckEvent) error {
 	p.messages <- prepareCheckMessage(checkTopic, event, time.Now())
 	return nil
 }
 
+// SendTestEvent passes TestEvent into messages channel for sending to Kafka
 func (p *kafkaProducer) SendTestEvent(event TestEvent) error {
 	p.messages <- prepareTestMessage(testTopic, event, time.Now())
 	return nil

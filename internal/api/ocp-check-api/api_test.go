@@ -70,7 +70,7 @@ var _ = Describe("Api", func() {
 
 		someError = errors.New("some error")
 
-		grpcApi = api.NewOcpCheckApi(batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
+		grpcApi = api.NewOcpCheckApi(api.BuildInfo{}, batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
 	})
 
 	Context("create check: success", func() {
@@ -170,7 +170,7 @@ var _ = Describe("Api", func() {
 		)
 
 		BeforeEach(func() {
-			grpcApi = api.NewOcpCheckApi(batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
+			grpcApi = api.NewOcpCheckApi(api.BuildInfo{}, batchSize, log, mockRepo, mockProducer, mockPrometheus, mockTracer)
 
 			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(1)
 			mockPrometheus.EXPECT().IncCreateCheck(gomock.Any()).Times(1)
@@ -216,14 +216,14 @@ var _ = Describe("Api", func() {
 		BeforeEach(func() {
 			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncUpdateCheck(gomock.Any()).Times(0)
-			mockRepo.EXPECT().UpdateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(false, repo.CheckNotFound)
+			mockRepo.EXPECT().UpdateCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(false, repo.ErrCheckNotFound)
 			updateResp, err = grpcApi.UpdateCheck(ctx, updateReq)
 		})
 
 		It("", func() {
 			Expect(err).ShouldNot(BeNil())
 			Expect(updateResp).Should(BeNil())
-			Expect(err).Should(Equal(status.Error(codes.NotFound, repo.CheckNotFound.Error())))
+			Expect(err).Should(Equal(status.Error(codes.NotFound, repo.ErrCheckNotFound.Error())))
 			entry := mockZeroLog.LastEntry()
 			Expect(entry).Should(BeNil())
 		})
@@ -277,7 +277,7 @@ var _ = Describe("Api", func() {
 		BeforeEach(func() {
 			mockProducer.EXPECT().SendCheckEvent(gomock.Any()).Times(0)
 			mockPrometheus.EXPECT().IncDeleteCheck(gomock.Any()).Times(0)
-			mockRepo.EXPECT().RemoveCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(repo.CheckNotFound)
+			mockRepo.EXPECT().RemoveCheck(gomock.Any(), gomock.Any()).MinTimes(1).Return(repo.ErrCheckNotFound)
 			removeResp, err = grpcApi.RemoveCheck(ctx, removeReq)
 		})
 

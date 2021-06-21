@@ -1,3 +1,6 @@
+// Package repo defines CheckRepo and TestRepo interfaces and implements types which
+// provide basic CRUD operations for models.Check and models.Type
+//
 package repo
 
 import (
@@ -13,10 +16,13 @@ import (
 )
 
 var (
-	CheckNotFound = errors.New("check not found")
-	TestNotFound  = errors.New("test not found")
+	// ErrCheckNotFound describes case when specified check not found in the database
+	ErrCheckNotFound = errors.New("check not found")
+	// ErrTestNotFound describes case when specified test not found in the database
+	ErrTestNotFound = errors.New("test not found")
 )
 
+// CheckRepo interface, version 1
 type CheckRepo interface {
 	CreateCheck(ctx context.Context, check models.Check) (uint64, error)
 	MultiCreateCheck(ctx context.Context, checks []models.Check) ([]uint64, error)
@@ -26,6 +32,7 @@ type CheckRepo interface {
 	ListChecks(ctx context.Context, limit, offset uint64) ([]models.Check, error)
 }
 
+// TestRepo interface, version 1
 type TestRepo interface {
 	CreateTest(ctx context.Context, test models.Test) (uint64, error)
 	MultiCreateTest(ctx context.Context, tests []models.Test) ([]uint64, error)
@@ -35,11 +42,13 @@ type TestRepo interface {
 	ListTests(ctx context.Context, limit, offset uint64) ([]models.Test, error)
 }
 
+// CheckRepo implementation
 type checkRepo struct {
 	db  *sqlx.DB
 	log *zerolog.Logger
 }
 
+// ListChecks returns database records (slice of models.Check) by offset. Parameter limit is a maximum size of slice.
 func (r *checkRepo) ListChecks(ctx context.Context, limit, offset uint64) ([]models.Check, error) {
 	query := sq.Select("id", "solution_id", "test_id", "runner_id", "success").
 		From("checks").
@@ -68,6 +77,8 @@ func (r *checkRepo) ListChecks(ctx context.Context, limit, offset uint64) ([]mod
 	return checks, nil
 }
 
+// DescribeCheck searches record in database and returns a models.Check (pointer), if record found by checkId, ErrCheckNotFound
+// if no such record found, or error in case of db error.
 func (r *checkRepo) DescribeCheck(ctx context.Context, checkId uint64) (*models.Check, error) {
 	query := sq.Select("id", "solution_id", "test_id", "runner_id", "success").
 		From("checks").
@@ -80,7 +91,7 @@ func (r *checkRepo) DescribeCheck(ctx context.Context, checkId uint64) (*models.
 	if err := row.Scan(&check.ID, &check.SolutionID, &check.TestID, &check.RunnerID, &check.Success); err != nil {
 		switch {
 		case err == sql.ErrNoRows:
-			return nil, CheckNotFound
+			return nil, ErrCheckNotFound
 		default:
 			r.log.Error().Err(err).Msg("")
 			return nil, err
@@ -90,6 +101,8 @@ func (r *checkRepo) DescribeCheck(ctx context.Context, checkId uint64) (*models.
 	return &check, nil
 }
 
+// UpdateCheck updates record in database and returns true if record was updated, ErrCheckNotFound
+// if no such record found, or another error in case of db error.
 func (r *checkRepo) UpdateCheck(ctx context.Context, check models.Check) (bool, error) {
 	query := sq.Update("checks").
 		Where(sq.Eq{"id": check.ID}).
@@ -109,12 +122,14 @@ func (r *checkRepo) UpdateCheck(ctx context.Context, check models.Check) (bool, 
 	// no rows affected and no error, it is a case of record not found
 	rows, resultErr := result.RowsAffected()
 	if rows == int64(0) && resultErr == nil {
-		return false, CheckNotFound
+		return false, ErrCheckNotFound
 	}
 
 	return true, err
 }
 
+// RemoveCheck deletes record in database and returns ErrCheckNotFound
+// if record was not found and deleted, or another error in case of db error.
 func (r *checkRepo) RemoveCheck(ctx context.Context, checkId uint64) error {
 	query := sq.Delete("checks").
 		Where(sq.Eq{"id": checkId}).
@@ -131,12 +146,13 @@ func (r *checkRepo) RemoveCheck(ctx context.Context, checkId uint64) error {
 	// no rows affected and no error, it is a case of record not found
 	rows, resultErr := result.RowsAffected()
 	if rows == int64(0) && resultErr == nil {
-		return CheckNotFound
+		return ErrCheckNotFound
 	}
 
 	return nil
 }
 
+// CreateCheck creates new record in database and returns its id, or returns error in case of db error.
 func (r *checkRepo) CreateCheck(ctx context.Context, check models.Check) (uint64, error) {
 	sb := sq.StatementBuilder.
 		PlaceholderFormat(sq.Dollar).
@@ -172,6 +188,7 @@ func (r *checkRepo) CreateCheck(ctx context.Context, check models.Check) (uint64
 	return id, nil
 }
 
+// MultiCreateCheck creates batch of new records in database and returns their ids, or returns error in case of db error.
 func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check) ([]uint64, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -211,17 +228,18 @@ func (r *checkRepo) MultiCreateCheck(ctx context.Context, checks []models.Check)
 	return ids, nil
 }
 
+// NewCheckRepo creates new instance (checkRepo) of CheckRepo interface
 func NewCheckRepo(db *sqlx.DB, log *zerolog.Logger) CheckRepo {
 	return &checkRepo{db: db, log: log}
 }
 
-// Test REPO
-
+// TestRepo implementation
 type testRepo struct {
 	db  *sqlx.DB
 	log *zerolog.Logger
 }
 
+// ListTests returns database records (slice of models.Test) by offset. Parameter limit is a maximum size of slice.
 func (r *testRepo) ListTests(ctx context.Context, limit, offset uint64) ([]models.Test, error) {
 	query := sq.Select("id", "task_id", "input", "output").
 		From("tests").
@@ -250,10 +268,12 @@ func (r *testRepo) ListTests(ctx context.Context, limit, offset uint64) ([]model
 	return tests, nil
 }
 
-func (r *testRepo) DescribeTest(ctx context.Context, checkId uint64) (*models.Test, error) {
+// DescribeTest searches record in database and returns a models.Test (pointer), if record found by testId, ErrCheckNotFound
+// if no such record found, or error in case of db error.
+func (r *testRepo) DescribeTest(ctx context.Context, testId uint64) (*models.Test, error) {
 	query := sq.Select("id", "task_id", "input", "output").
 		From("tests").
-		Where(sq.Eq{"id": checkId}).
+		Where(sq.Eq{"id": testId}).
 		RunWith(r.db).
 		PlaceholderFormat(sq.Dollar)
 	row := query.QueryRowContext(ctx)
@@ -262,7 +282,7 @@ func (r *testRepo) DescribeTest(ctx context.Context, checkId uint64) (*models.Te
 	if err := row.Scan(&test.ID, &test.TaskID, &test.Input, &test.Output); err != nil {
 		switch {
 		case err == sql.ErrNoRows:
-			return nil, TestNotFound
+			return nil, ErrTestNotFound
 		default:
 			r.log.Error().Err(err).Msg("")
 			return nil, err
@@ -272,6 +292,8 @@ func (r *testRepo) DescribeTest(ctx context.Context, checkId uint64) (*models.Te
 	return &test, nil
 }
 
+// UpdateTest updates record in database and returns true if record was updated, ErrTestNotFound
+// if no such record found, or another error in case of db error.
 func (r *testRepo) UpdateTest(ctx context.Context, test models.Test) (bool, error) {
 	query := sq.Update("tests").
 		Where(sq.Eq{"id": test.ID}).
@@ -290,12 +312,14 @@ func (r *testRepo) UpdateTest(ctx context.Context, test models.Test) (bool, erro
 	// no rows affected and no error, it is a case of record not found
 	rows, resultErr := result.RowsAffected()
 	if rows == int64(0) && resultErr == nil {
-		return false, TestNotFound
+		return false, ErrTestNotFound
 	}
 
 	return true, err
 }
 
+// RemoveTest deletes record in database and returns ErrTestNotFound
+// if record was not found and deleted, or another error in case of db error.
 func (r *testRepo) RemoveTest(ctx context.Context, testId uint64) error {
 	query := sq.Delete("tests").
 		Where(sq.Eq{"id": testId}).
@@ -312,12 +336,13 @@ func (r *testRepo) RemoveTest(ctx context.Context, testId uint64) error {
 	// no rows affected and no error, it is a case of record not found
 	rows, resultErr := result.RowsAffected()
 	if rows == int64(0) && resultErr == nil {
-		return TestNotFound
+		return ErrTestNotFound
 	}
 
 	return nil
 }
 
+// CreateTest creates new record in database and returns its id, or returns error in case of db error.
 func (r *testRepo) CreateTest(ctx context.Context, test models.Test) (uint64, error) {
 	sb := sq.StatementBuilder.
 		PlaceholderFormat(sq.Dollar).
@@ -353,6 +378,7 @@ func (r *testRepo) CreateTest(ctx context.Context, test models.Test) (uint64, er
 	return id, nil
 }
 
+// MultiCreateTest creates batch of new records in database and returns their ids, or returns error in case of db error.
 func (r *testRepo) MultiCreateTest(ctx context.Context, tests []models.Test) ([]uint64, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -392,6 +418,7 @@ func (r *testRepo) MultiCreateTest(ctx context.Context, tests []models.Test) ([]
 	return ids, nil
 }
 
+// NewTestRepo creates new instance (testRepo) of TestRepo interface
 func NewTestRepo(db *sqlx.DB, log *zerolog.Logger) TestRepo {
 	return &testRepo{db: db, log: log}
 }

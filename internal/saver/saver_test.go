@@ -37,7 +37,7 @@ var _ = Describe("Saver", func() {
 		alarms = make(chan struct{})
 		mockAlarmer.EXPECT().Alarm().Return(alarms).AnyTimes()
 
-		s = saver.NewSaver(1000, 2, mockAlarmer, mockFlusher)
+		s = saver.NewSaver(uint(1000), mockAlarmer, mockFlusher)
 	})
 
 	JustBeforeEach(func() {

@@ -1,3 +1,7 @@
+// Package flusher defines CheckFlusher and TestFlusher interfaces and
+// implements checkFlusher and testFlusher types which
+// flushes slice of models.Check and models.Type into repo.
+//
 package flusher
 
 import (
@@ -12,11 +16,14 @@ type CheckFlusher interface {
 	Flush(ctx context.Context, checks []models.Check) []models.Check
 }
 
+// CheckFlusher implementation
 type checkFlusher struct {
 	chunkSize int
 	checkRepo repo.CheckRepo
 }
 
+// Flush splits slice of models.Check into batches and sends each batch into repo.
+// If error occurred, it returns remained (not flushed) checks.
 func (f *checkFlusher) Flush(ctx context.Context, checks []models.Check) []models.Check {
 	bulks, err := utils.SplitChecksToBulks(checks, uint(f.chunkSize))
 	if err != nil {
@@ -32,6 +39,7 @@ func (f *checkFlusher) Flush(ctx context.Context, checks []models.Check) []model
 	return nil
 }
 
+// NewCheckFlusher creates instance of checkFlusher
 func NewCheckFlusher(chunkSize int, checkRepo repo.CheckRepo) CheckFlusher {
 	return &checkFlusher{chunkSize: chunkSize, checkRepo: checkRepo}
 }
@@ -40,11 +48,14 @@ type TestFlusher interface {
 	Flush(ctx context.Context, tests []models.Test) []models.Test
 }
 
+// TestFlusher implementation
 type testFlusher struct {
 	chunkSize int
 	testRepo  repo.TestRepo
 }
 
+// Flush splits slice of models.Test into batches and sends each batch into repo.
+// If error occurred, it returns remained (not flushed) tests.
 func (f *testFlusher) Flush(ctx context.Context, tests []models.Test) []models.Test {
 	bulks, err := utils.SplitTestsToBulks(tests, uint(f.chunkSize))
 	if err != nil {
@@ -59,6 +70,7 @@ func (f *testFlusher) Flush(ctx context.Context, tests []models.Test) []models.T
 	return nil
 }
 
+// NewTestFlusher creates instance of testFlusher
 func NewTestFlusher(chunkSize int, testRepo repo.TestRepo) TestFlusher {
 	return &testFlusher{chunkSize: chunkSize, testRepo: testRepo}
 }

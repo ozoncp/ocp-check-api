@@ -1,20 +1,157 @@
 {
-  "swagger": "2.0",
-  "info": {
-    "title": "api/ocp-test-api/ocp-test-api.proto",
-    "version": "version not set"
-  },
   "consumes": [
     "application/json"
   ],
   "produces": [
     "application/json"
   ],
+  "swagger": "2.0",
+  "info": {
+    "title": "api/ocp-check-api/ocp-check-api.proto",
+    "version": "version not set"
+  },
   "paths": {
+    "/checks": {
+      "get": {
+        "tags": [
+          "OcpCheckApi"
+        ],
+        "summary": "Возвращает список \"проверок\"",
+        "operationId": "OcpCheckApi_ListChecks",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiListChecksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "OcpCheckApi"
+        ],
+        "summary": "Обновляет \"проверку\" по идентификатору",
+        "operationId": "OcpCheckApi_UpdateCheck",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiUpdateCheckResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        }
+      }
+    },
+    "/checks/{check_id}": {
+      "get": {
+        "tags": [
+          "OcpCheckApi"
+        ],
+        "summary": "Возвращает описание \"проверки\" по ее идентификатору",
+        "operationId": "OcpCheckApi_DescribeCheck",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "check_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiDescribeCheckResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "OcpCheckApi"
+        ],
+        "summary": "Удаляет \"проверку\" по идентификатору",
+        "operationId": "OcpCheckApi_RemoveCheck",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "check_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiRemoveCheckResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        }
+      }
+    },
     "/tests": {
       "get": {
+        "tags": [
+          "OcpTestApi"
+        ],
         "summary": "Возвращает список \"тестов\"",
         "operationId": "OcpTestApi_ListTests",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -28,28 +165,12 @@
               "$ref": "#/definitions/runtimeError"
             }
           }
-        },
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "OcpTestApi"
-        ]
+        }
       },
       "post": {
+        "tags": [
+          "OcpTestApi"
+        ],
         "summary": "Обновляет \"тест\" по идентификатору",
         "operationId": "OcpTestApi_UpdateTest",
         "responses": {
@@ -65,16 +186,25 @@
               "$ref": "#/definitions/runtimeError"
             }
           }
-        },
-        "tags": [
-          "OcpTestApi"
-        ]
+        }
       }
     },
     "/tests/{test_id}": {
       "get": {
+        "tags": [
+          "OcpTestApi"
+        ],
         "summary": "Возвращает описание \"теста\" по ее идентификатору",
         "operationId": "OcpTestApi_DescribeTest",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "test_id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -88,23 +218,23 @@
               "$ref": "#/definitions/runtimeError"
             }
           }
-        },
-        "parameters": [
-          {
-            "name": "test_id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "OcpTestApi"
-        ]
+        }
       },
       "delete": {
+        "tags": [
+          "OcpTestApi"
+        ],
         "summary": "Удаляет \"тест\" по идентификатору",
         "operationId": "OcpTestApi_RemoveTest",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uint64",
+            "name": "test_id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -118,35 +248,114 @@
               "$ref": "#/definitions/runtimeError"
             }
           }
-        },
-        "parameters": [
-          {
-            "name": "test_id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
+        }
+      }
+    },
+    "/version": {
+      "get": {
         "tags": [
-          "OcpTestApi"
-        ]
+          "OcpCheckApi"
+        ],
+        "operationId": "OcpCheckApi_ApiVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiApiVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        }
       }
     }
   },
   "definitions": {
-    "apiCreateTestRequest": {
+    "apiApiVersionResponse": {
       "type": "object",
+      "title": "Описание структуры \"версия API\"",
       "properties": {
-        "taskID": {
+        "buildDateTime": {
+          "type": "string"
+        },
+        "gitCommit": {
+          "type": "string"
+        },
+        "protocolRevision": {
+          "type": "string"
+        }
+      }
+    },
+    "apiCheck": {
+      "type": "object",
+      "title": "Описание структуры \"проверка\"",
+      "properties": {
+        "id": {
           "type": "string",
           "format": "uint64"
         },
+        "runnerID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "solutionID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "testID": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "apiCreateCheckRequest": {
+      "type": "object",
+      "properties": {
+        "runnerID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "solutionID": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "testID": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "apiCreateCheckResponse": {
+      "type": "object",
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "apiCreateTestRequest": {
+      "type": "object",
+      "properties": {
         "input": {
           "type": "string"
         },
         "output": {
           "type": "string"
+        },
+        "taskID": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -159,11 +368,30 @@
         }
       }
     },
+    "apiDescribeCheckResponse": {
+      "type": "object",
+      "properties": {
+        "check": {
+          "$ref": "#/definitions/apiCheck"
+        }
+      }
+    },
     "apiDescribeTestResponse": {
       "type": "object",
       "properties": {
         "test": {
           "$ref": "#/definitions/apiTest"
+        }
+      }
+    },
+    "apiListChecksResponse": {
+      "type": "object",
+      "properties": {
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiCheck"
+          }
         }
       }
     },
@@ -178,12 +406,29 @@
         }
       }
     },
+    "apiMultiCreateCheckResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "apiMultiCreateTestResponse": {
       "type": "object",
       "properties": {
         "created": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "apiRemoveCheckResponse": {
+      "type": "object",
+      "properties": {
+        "deleted": {
+          "type": "boolean"
         }
       }
     },
@@ -197,12 +442,9 @@
     },
     "apiTest": {
       "type": "object",
+      "title": "Описание структуры \"тест\"",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "taskID": {
           "type": "string",
           "format": "uint64"
         },
@@ -211,9 +453,20 @@
         },
         "output": {
           "type": "string"
+        },
+        "taskID": {
+          "type": "string",
+          "format": "uint64"
         }
-      },
-      "title": "Описание структуры \"тест\""
+      }
+    },
+    "apiUpdateCheckResponse": {
+      "type": "object",
+      "properties": {
+        "updated": {
+          "type": "boolean"
+        }
+      }
     },
     "apiUpdateTestResponse": {
       "type": "object",
@@ -238,21 +491,21 @@
     "runtimeError": {
       "type": "object",
       "properties": {
-        "error": {
-          "type": "string"
-        },
         "code": {
           "type": "integer",
           "format": "int32"
-        },
-        "message": {
-          "type": "string"
         },
         "details": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
         }
       }
     }

@@ -50,7 +50,7 @@ func TransposeMap(source interface{}) (dest map[string]string, err error) {
 	return
 }
 
-// Helper function
+// Helper function, for filtering slice of strings using func f.
 func filter(vs []string, f func(string) bool) []string {
 	filtered := make([]string, 0)
 	for _, v := range vs {
@@ -77,6 +77,7 @@ func Filter(source []string, exclusion []string) []string {
 	return filter(source, f)
 }
 
+// Function splits slice of models.Check into chunks, size of batchSize.
 func SplitChecksToBulks(checks []models.Check, batchSize uint) (batches [][]models.Check, err error) {
 	if batchSize == 0 {
 		err = errors.New("invalid batch size")
@@ -91,6 +92,7 @@ func SplitChecksToBulks(checks []models.Check, batchSize uint) (batches [][]mode
 	return
 }
 
+// Functions converts slice of models.Check into map, where models.Check.ID is a key and models.Check is a value.
 func ConvertChecksToMap(checks []models.Check) (map[uint64]models.Check, error) {
 	m := make(map[uint64]models.Check, len(checks))
 	for _, v := range checks {
@@ -100,6 +102,7 @@ func ConvertChecksToMap(checks []models.Check) (map[uint64]models.Check, error) 
 	return m, nil
 }
 
+// Function splits slice of models.Test into chunks, size of batchSize.
 func SplitTestsToBulks(tests []models.Test, batchSize uint) (batches [][]models.Test, err error) {
 	if batchSize == 0 {
 		err = errors.New("invalid batch size")
@@ -114,6 +117,7 @@ func SplitTestsToBulks(tests []models.Test, batchSize uint) (batches [][]models.
 	return
 }
 
+// Functions converts slice of models.Test into map, where models.Test.ID is a key and models.Test is a value.
 func ConvertTestsToMap(tests []models.Test) (map[uint64]models.Test, error) {
 	m := make(map[uint64]models.Test, len(tests))
 	for _, v := range tests {

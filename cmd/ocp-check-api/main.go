@@ -38,6 +38,9 @@ import (
 
 var (
 	InvalidConfigError = errors.New("Unable to create logger: console and file loggers are disabled. Check config file...")
+	GitCommit          string
+	ProtocolRevision   = "V1"
+	BuildDateTime      string
 )
 
 type config struct {
@@ -74,6 +77,7 @@ var configDefaults = map[string]interface{}{
 // Read the config file from the current directory and marshal it into the config struct.
 func getConfig() *config {
 	viper.AddConfigPath("./")
+	viper.AddConfigPath("./config")
 	viper.SetConfigFile("config.yml")
 
 	for k, v := range configDefaults {
@@ -223,7 +227,12 @@ func runGrpcServer(cfg *config) error {
 	})
 
 	g.Go(func() error {
-		descc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(100, log, checkRepo, producer, prom, opentracing.GlobalTracer()))
+		buildInfo := api.BuildInfo{
+			GitCommit:        GitCommit,
+			ProtocolRevision: ProtocolRevision,
+			BuildDateTime:    BuildDateTime,
+		}
+		descc.RegisterOcpCheckApiServer(s, api.NewOcpCheckApi(buildInfo, 100, log, checkRepo, producer, prom, opentracing.GlobalTracer()))
 		desct.RegisterOcpTestApiServer(s, apit.NewOcpTestApi(100, log, testRepo, producer, prom, opentracing.GlobalTracer()))
 
 		if err := s.Serve(listen); err != nil {

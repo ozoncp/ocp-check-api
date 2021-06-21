@@ -1,3 +1,6 @@
+// Package api implements api type which is able to handle gRPC requests and responses for tests.
+// The "api" also sends CUD messages into Kafka, calls opentracing and manages Prometheus CUD counters.
+//
 package api
 
 import (
@@ -26,10 +29,7 @@ type api struct {
 	desc.UnimplementedOcpTestApiServer
 }
 
-func (a *api) SendEvent(event producer.TestEvent) error {
-	return a.producer.SendTestEvent(event)
-}
-
+// ListTests: gRPC handler for getting portion of tests from database
 func (a *api) ListTests(ctx context.Context,
 	req *desc.ListTestsRequest,
 ) (*desc.ListTestsResponse, error) {
@@ -57,6 +57,7 @@ func (a *api) ListTests(ctx context.Context,
 	return &desc.ListTestsResponse{Tests: pbTests}, err
 }
 
+// DescribeTest: gRPC handler for getting test by id
 func (a *api) DescribeTest(
 	ctx context.Context,
 	req *desc.DescribeTestRequest,
@@ -71,7 +72,7 @@ func (a *api) DescribeTest(
 	test, err = a.repo.DescribeTest(ctx, req.TestId)
 	if err != nil {
 		switch {
-		case err == repo.TestNotFound:
+		case err == repo.ErrTestNotFound:
 			return nil, status.Error(codes.NotFound, err.Error())
 		default:
 			return nil, status.Error(codes.Unknown, err.Error())
@@ -88,6 +89,7 @@ func (a *api) DescribeTest(
 	return &desc.DescribeTestResponse{Test: pbTest}, nil
 }
 
+// CreateTest: gRPC handler for creating new test
 func (a *api) CreateTest(ctx context.Context,
 	req *desc.CreateTestRequest,
 ) (*desc.CreateTestResponse, error) {
@@ -118,6 +120,7 @@ func (a *api) CreateTest(ctx context.Context,
 	return &desc.CreateTestResponse{TestId: id}, nil
 }
 
+// MultiCreateTest: gRPC handler for creating batch of tests
 func (a *api) MultiCreateTest(ctx context.Context,
 	req *desc.MultiCreateTestRequest,
 ) (*desc.MultiCreateTestResponse, error) {
@@ -168,6 +171,7 @@ func (a *api) MultiCreateTest(ctx context.Context,
 	return &desc.MultiCreateTestResponse{Created: totalCreatedTests}, nil
 }
 
+// UpdateTest: gRPC handler for updating specified test
 func (a *api) UpdateTest(ctx context.Context,
 	req *desc.UpdateTestRequest,
 ) (*desc.UpdateTestResponse, error) {
@@ -181,7 +185,7 @@ func (a *api) UpdateTest(ctx context.Context,
 
 	updated, err := a.repo.UpdateTest(ctx, updatedTest)
 	switch {
-	case err == repo.TestNotFound:
+	case err == repo.ErrTestNotFound:
 		return nil, status.Error(codes.NotFound, err.Error())
 	case err != nil:
 		return nil, status.Error(codes.Unknown, err.Error())
@@ -197,6 +201,7 @@ func (a *api) UpdateTest(ctx context.Context,
 	}, nil
 }
 
+// RemoveTest: gRPC handler for deleting specified test
 func (a *api) RemoveTest(ctx context.Context,
 	req *desc.RemoveTestRequest,
 ) (*desc.RemoveTestResponse, error) {
@@ -205,7 +210,7 @@ func (a *api) RemoveTest(ctx context.Context,
 
 	err := a.repo.RemoveTest(ctx, req.TestId)
 	switch {
-	case err == repo.TestNotFound:
+	case err == repo.ErrTestNotFound:
 		found = false
 	case err != nil:
 		return nil, status.Error(codes.Unknown, err.Error())
@@ -222,6 +227,7 @@ func (a *api) RemoveTest(ctx context.Context,
 	}, nil
 }
 
+// NewOcpTestApi creates api instance
 func NewOcpTestApi(batchSize uint, log zerolog.Logger, repo repo.TestRepo, producer producer.Producer, prom prometheus.Prometheus, tracer opentracing.Tracer) desc.OcpTestApiServer {
 	return &api{
 		batchSize: batchSize,

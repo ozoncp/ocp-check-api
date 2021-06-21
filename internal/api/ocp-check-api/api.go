@@ -1,3 +1,6 @@
+// Package api implements api type which is able to handle gRPC requests and responses for checks.
+// The "api" also sends CUD messages into Kafka, calls opentracing and manages Prometheus CUD counters.
+//
 package api
 
 import (
@@ -16,6 +19,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// BuildInfo stores some information about build and protocol
+type BuildInfo struct {
+	GitCommit        string
+	ProtocolRevision string
+	BuildDateTime    string
+}
+
 type api struct {
 	batchSize uint
 	log       zerolog.Logger
@@ -23,13 +33,11 @@ type api struct {
 	producer  producer.Producer
 	prom      prometheus.Prometheus
 	tracer    opentracing.Tracer
+	buildInfo BuildInfo
 	desc.UnimplementedOcpCheckApiServer
 }
 
-func (a *api) SendCheckEvent(event producer.CheckEvent) error {
-	return a.producer.SendCheckEvent(event)
-}
-
+// ListChecks: gRPC handler for getting portion of checks from database
 func (a *api) ListChecks(ctx context.Context,
 	req *desc.ListChecksRequest,
 ) (*desc.ListChecksResponse, error) {
@@ -58,6 +66,7 @@ func (a *api) ListChecks(ctx context.Context,
 	return &desc.ListChecksResponse{Checks: pbChecks}, err
 }
 
+// DescribeCheck: gRPC handler for getting check by id
 func (a *api) DescribeCheck(
 	ctx context.Context,
 	req *desc.DescribeCheckRequest,
@@ -72,7 +81,7 @@ func (a *api) DescribeCheck(
 	check, err = a.repo.DescribeCheck(ctx, req.CheckId)
 	if err != nil {
 		switch {
-		case err == repo.CheckNotFound:
+		case err == repo.ErrCheckNotFound:
 			return nil, status.Error(codes.NotFound, err.Error())
 		default:
 			return nil, status.Error(codes.Unknown, err.Error())
@@ -90,6 +99,7 @@ func (a *api) DescribeCheck(
 	return &desc.DescribeCheckResponse{Check: pbCheck}, nil
 }
 
+// CreateCheck: gRPC handler for creating new check
 func (a *api) CreateCheck(ctx context.Context,
 	req *desc.CreateCheckRequest,
 ) (*desc.CreateCheckResponse, error) {
@@ -121,6 +131,7 @@ func (a *api) CreateCheck(ctx context.Context,
 	return &desc.CreateCheckResponse{CheckId: id}, nil
 }
 
+// MultiCreateCheck: gRPC handler for creating batch of checks
 func (a *api) MultiCreateCheck(ctx context.Context,
 	req *desc.MultiCreateCheckRequest,
 ) (*desc.MultiCreateCheckResponse, error) {
@@ -172,6 +183,7 @@ func (a *api) MultiCreateCheck(ctx context.Context,
 	return &desc.MultiCreateCheckResponse{Created: totalCreatedChecks}, nil
 }
 
+// UpdateCheck: gRPC handler for updating specified check
 func (a *api) UpdateCheck(ctx context.Context,
 	req *desc.UpdateCheckRequest,
 ) (*desc.UpdateCheckResponse, error) {
@@ -186,7 +198,7 @@ func (a *api) UpdateCheck(ctx context.Context,
 
 	updated, err := a.repo.UpdateCheck(ctx, updatedCheck)
 	switch {
-	case err == repo.CheckNotFound:
+	case err == repo.ErrCheckNotFound:
 		return nil, status.Error(codes.NotFound, err.Error())
 	case err != nil:
 		return nil, status.Error(codes.Unknown, err.Error())
@@ -202,6 +214,7 @@ func (a *api) UpdateCheck(ctx context.Context,
 	}, nil
 }
 
+// RemoveCheck: gRPC handler for deleting specified check
 func (a *api) RemoveCheck(ctx context.Context,
 	req *desc.RemoveCheckRequest,
 ) (*desc.RemoveCheckResponse, error) {
@@ -210,7 +223,7 @@ func (a *api) RemoveCheck(ctx context.Context,
 
 	err := a.repo.RemoveCheck(ctx, req.CheckId)
 	switch {
-	case err == repo.CheckNotFound:
+	case err == repo.ErrCheckNotFound:
 		found = false
 	case err != nil:
 		return nil, status.Error(codes.Unknown, err.Error())
@@ -227,12 +240,24 @@ func (a *api) RemoveCheck(ctx context.Context,
 	}, nil
 }
 
-func NewOcpCheckApi(batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus, tracer opentracing.Tracer) desc.OcpCheckApiServer {
+// ApiVersion: gRPC handler for getting api information (git commit, revision, build date)
+func (a *api) ApiVersion(ctx context.Context,
+	req *desc.Empty,
+) (*desc.ApiVersionResponse, error) {
+	return &desc.ApiVersionResponse{
+		GitCommit:        a.buildInfo.GitCommit,
+		ProtocolRevision: a.buildInfo.ProtocolRevision,
+		BuildDateTime:    a.buildInfo.BuildDateTime}, nil
+}
+
+// NewOcpCheckApi creates api instance
+func NewOcpCheckApi(buildInfo BuildInfo, batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus, tracer opentracing.Tracer) desc.OcpCheckApiServer {
 	return &api{
 		batchSize: batchSize,
 		log:       log,
 		repo:      repo,
 		producer:  producer,
 		prom:      prom,
+		buildInfo: buildInfo,
 		tracer:    tracer}
 }
