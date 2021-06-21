@@ -79,7 +79,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiListChecksResponse](#apilistchecksresponse) |
+| 200 | A successful response. | [ListChecksResponse](#apilistchecksresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 #### POST
@@ -91,7 +91,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiUpdateCheckResponse](#apiupdatecheckresponse) |
+| 200 | A successful response. | [UpdateCheckResponse](#apiupdatecheckresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 ### /checks/{check_id}
@@ -111,7 +111,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiDescribeCheckResponse](#apidescribecheckresponse) |
+| 200 | A successful response. | [DescribeCheckResponse](#apidescribecheckresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 #### DELETE
@@ -129,7 +129,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiRemoveCheckResponse](#apiremovecheckresponse) |
+| 200 | A successful response. | [RemoveCheckResponse](#apiremovecheckresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 ### /tests
@@ -150,7 +150,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiListTestsResponse](#apilisttestsresponse) |
+| 200 | A successful response. | [ListTestsResponse](#apilisttestsresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 #### POST
@@ -162,7 +162,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiUpdateTestResponse](#apiupdatetestresponse) |
+| 200 | A successful response. | [UpdateTestResponse](#apiupdatetestresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 ### /tests/{test_id}
@@ -182,7 +182,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiDescribeTestResponse](#apidescribetestresponse) |
+| 200 | A successful response. | [DescribeTestResponse](#apidescribetestresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 #### DELETE
@@ -200,7 +200,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiRemoveTestResponse](#apiremovetestresponse) |
+| 200 | A successful response. | [RemoveTestResponse](#apiremovetestresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 ### /version
@@ -210,7 +210,7 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | [apiApiVersionResponse](#apiapiversionresponse) |
+| 200 | A successful response. | [ApiVersionResponse](#apiapiversionresponse) |
 | default | An unexpected error response. | [runtimeError](#runtimeerror) |
 
 ### Models
@@ -266,25 +266,25 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| check | [apiCheck](#apicheck) |  | No |
+| check | [Check](#apicheck) |  | No |
 
 #### apiDescribeTestResponse
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| test | [apiTest](#apitest) |  | No |
+| test | [Test](#apitest) |  | No |
 
 #### apiListChecksResponse
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| checks | [ [apiCheck](#apicheck) ] |  | No |
+| checks | [ [Check](#apicheck) ] |  | No |
 
 #### apiListTestsResponse
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| tests | [ [apiTest](#apitest) ] |  | No |
+| tests | [ [Test](#apitest) ] |  | No |
 
 #### apiMultiCreateCheckResponse
 
@@ -346,4 +346,3 @@ $ ./migrate -source file:./migrations -database postgres://localhost:5432/db?ssl
 | details | [ [protobufAny](#protobufany) ] |  | No |
 | error | string |  | No |
 | message | string |  | No |
-
