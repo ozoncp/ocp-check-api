@@ -16,6 +16,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type BuildInfo struct {
+	GitCommit        string
+	ProtocolRevision string
+	BuildDateTime    string
+}
+
 type api struct {
 	batchSize uint
 	log       zerolog.Logger
@@ -23,6 +29,7 @@ type api struct {
 	producer  producer.Producer
 	prom      prometheus.Prometheus
 	tracer    opentracing.Tracer
+	buildInfo BuildInfo
 	desc.UnimplementedOcpCheckApiServer
 }
 
@@ -227,12 +234,22 @@ func (a *api) RemoveCheck(ctx context.Context,
 	}, nil
 }
 
-func NewOcpCheckApi(batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus, tracer opentracing.Tracer) desc.OcpCheckApiServer {
+func (a *api) ApiVersion(ctx context.Context,
+	req *desc.Empty,
+) (*desc.ApiVersionResponse, error) {
+	return &desc.ApiVersionResponse{
+		GitCommit:        a.buildInfo.GitCommit,
+		ProtocolRevision: a.buildInfo.ProtocolRevision,
+		BuildDateTime:    a.buildInfo.BuildDateTime}, nil
+}
+
+func NewOcpCheckApi(buildInfo BuildInfo, batchSize uint, log zerolog.Logger, repo repo.CheckRepo, producer producer.Producer, prom prometheus.Prometheus, tracer opentracing.Tracer) desc.OcpCheckApiServer {
 	return &api{
 		batchSize: batchSize,
 		log:       log,
 		repo:      repo,
 		producer:  producer,
 		prom:      prom,
+		buildInfo: buildInfo,
 		tracer:    tracer}
 }

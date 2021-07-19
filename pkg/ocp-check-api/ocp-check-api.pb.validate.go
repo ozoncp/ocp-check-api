@@ -994,3 +994,140 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckValidationError{}
+
+// Validate checks the field values on Empty with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Empty) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	return nil
+}
+
+// EmptyValidationError is the validation error returned by Empty.Validate if
+// the designated constraints aren't met.
+type EmptyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EmptyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EmptyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EmptyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EmptyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EmptyValidationError) ErrorName() string { return "EmptyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e EmptyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEmpty.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EmptyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EmptyValidationError{}
+
+// Validate checks the field values on ApiVersionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ApiVersionResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for GitCommit
+
+	// no validation rules for ProtocolRevision
+
+	// no validation rules for BuildDateTime
+
+	return nil
+}
+
+// ApiVersionResponseValidationError is the validation error returned by
+// ApiVersionResponse.Validate if the designated constraints aren't met.
+type ApiVersionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ApiVersionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ApiVersionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ApiVersionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ApiVersionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ApiVersionResponseValidationError) ErrorName() string {
+	return "ApiVersionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ApiVersionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sApiVersionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ApiVersionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ApiVersionResponseValidationError{}

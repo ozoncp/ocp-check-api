@@ -11,6 +11,12 @@ option go_package = "github.com/ozoncp/ocp-check-api/pkg/ocp-check-api;ocp_check
 
 service OcpCheckApi {
 
+    rpc ApiVersion(Empty) returns (ApiVersionResponse) {
+        option (google.api.http) = {
+            get: "/version"
+        };        
+    }
+
     // Возвращает список "проверок"
     rpc ListChecks(ListChecksRequest) returns (ListChecksResponse) {
         option (google.api.http) = {
@@ -115,3 +121,12 @@ message Check {
     bool success = 5;
 }
 
+// Пустая структура
+message Empty {}
+
+// Описание структуры "версия API"
+message ApiVersionResponse {
+    string gitCommit = 1;
+    string protocolRevision = 2;
+    string buildDateTime = 3;
+}
